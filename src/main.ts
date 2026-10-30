@@ -1,5 +1,7 @@
 import { startWorkspace } from "./server.ts";
-const workspace = await startWorkspace();
+const args = process.argv.slice(2);
+if (args.length && (args.length !== 2 || args[0] !== "--source")) throw new Error("Usage: npm start -- [--source <authorized-directory>]");
+const workspace = await startWorkspace({ sourceDirectory: args[1] });
 console.log(
   `\nHoneyweb\n  Dashboard  ${workspace.adminURL}\n  Decoys     ${workspace.decoyURL}\n\nOffline fixture active. Select Meta in the dashboard to make a real model call.\n`,
 );

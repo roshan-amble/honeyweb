@@ -1,6 +1,6 @@
 {
   "name": "honeyweb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Repository-aware deception graphs powered by Meta models",
@@ -15,7 +15,8 @@
     "generate": "node --env-file-if-exists=.env --import tsx src/cli.ts generate",
     "build": "tsc --noEmit && vite build",
     "test": "node --import tsx --test test/*.test.ts",
-    "check": "npm run test && npm run build"
+    "check": "npm run test && npm run build",
+    "evaluate": "node --env-file-if-exists=.env --import tsx scripts/evaluate.ts"
   },
   "dependencies": {
     "react": "^19.2.0",

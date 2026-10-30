@@ -6,8 +6,11 @@ This is an early local demonstration, not a hardened deployment or a security gu
 
 - Read-only local AST parsing. No source imports, build scripts, package installation, repository hooks, or application execution during scans.
 - Explicitly bounded scan size and traversal depth. Hidden files, symlinks, build outputs, and dependency directories are skipped. Source literal values and comments are not copied into metadata.
-- Meta receives route and interface metadata only. Metadata may still be sensitive; inspect and obtain permission before using private source.
-- Structured plan validation accepts exactly three supported node kinds, two prescribed edges, canonical relative paths, and an observed entity. Extra properties are rejected. No eval, shell, executable templates, or model-selected outbound URLs.
+- The generator receives route/interface metadata and inferred references. The explorer receives redacted HTTP observations containing synthetic data. Metadata may still be sensitive; inspect and obtain permission before using private source.
+- Structured plan validation accepts three supported node kinds, up to thirteen nodes, reachable graph edges, canonical relative paths, observed entities and verified convention-based references. Extra properties are rejected. No eval, shell, executable templates, or model-selected outbound URLs.
+- The explorer only requests canonical paths discovered in responses on the supplied literal `127.0.0.1` origin. No redirects, model-selected hosts, methods, headers, arbitrary paths or production credentials. Requests are capped at 16, with 3-second HTTP timeouts and 64 KB response limits; the dashboard uses 12.
+- Custom source roots are selected at process startup, not through browser-supplied filesystem paths.
+- Candidates must pass schema and reference checks before atomic deployment; failed candidates retain the prior deployment.
 - Fresh cryptographically random credentials on breadcrumb access. Credentials only authorize this decoy runtime, expire after 15 minutes, and are invalidated on deploy/restart.
 - Synthetic records, reserved `.invalid` email domains, and no production connections. Collection and export share consistent records.
 - Admin and decoy HTTP surfaces use different loopback ports. No admin endpoints on the decoy listener. Admin Host/Origin checks, no cross-origin permission, and JSON-only mutations mitigate browser-origin attacks against localhost.

@@ -10,10 +10,12 @@ import { fileURLToPath } from "node:url";
 import { scanRepository, drift, type Snapshot } from "./scanner.ts";
 import { offlinePlan } from "./plan.ts";
 import { generateWithMeta } from "./meta.ts";
-import { DecoyRuntime, json, traverse } from "./runtime.ts";
+import { DecoyRuntime, json } from "./runtime.ts";
+import { explore, type ExplorerReport } from "./explorer.ts";
+import { impact, type Check } from "./data.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-type Fixture = "v1" | "v2";
+type Fixture = "v1" | "v2" | "custom";
 
 async function body(req: IncomingMessage): Promise<Record<string, unknown>> {
   if (!req.headers["content-type"]?.startsWith("application/json"))
@@ -50,19 +52,27 @@ function close(server: Server) {
 }
 
 export async function startWorkspace(
-  options: { adminPort?: number; decoyPort?: number } = {},
+  options: { adminPort?: number; decoyPort?: number; sourceDirectory?: string } = {},
 ) {
-  let fixture: Fixture = "v1";
-  let snapshot = await scanRepository(resolve(root, "fixtures/acme-v1"));
+  let fixture: Fixture = options.sourceDirectory ? "custom" : "v1";
+  const sourceDirectory = options.sourceDirectory ? resolve(options.sourceDirectory) : null;
+  let snapshot = await scanRepository(sourceDirectory ?? resolve(root, "fixtures/acme-v1"));
   let deployedSnapshot: Snapshot = snapshot;
   const runtime = new DecoyRuntime(offlinePlan(snapshot), snapshot);
   let busy = false;
+  let explorer: ExplorerReport | null = null;
+  let regeneration: { before: Check[]; after: Check[]; affected: ReturnType<typeof impact>; from: string; to: string } | null = null;
   const decoyServer = createServer(runtime.handle);
   const decoyURL = await listen(decoyServer, options.decoyPort ?? 4311);
   let adminURL = "";
   const state = () => ({
     fixture,
+    customSource: Boolean(sourceDirectory),
     snapshot,
+    checks: runtime.audit(snapshot),
+    affected: impact(deployedSnapshot, snapshot, runtime.generation),
+    explorer,
+    regeneration,
     generation: runtime.generation,
     deploymentId: runtime.deploymentId,
     events: runtime.events,
@@ -102,12 +112,12 @@ export async function startWorkspace(
       try {
         const input = await body(req);
         if (url.pathname === "/api/scan") {
-          if (input.fixture !== "v1" && input.fixture !== "v2")
-            throw new Error("Choose fixture v1 or v2.");
+          if (input.fixture !== "v1" && input.fixture !== "v2" && !(input.fixture === "custom" && sourceDirectory))
+            throw new Error("Choose an available source snapshot.");
           const next = await scanRepository(
-            resolve(root, `fixtures/acme-${input.fixture}`),
+            input.fixture === "custom" ? sourceDirectory! : resolve(root, `fixtures/acme-${input.fixture}`),
           );
-          fixture = input.fixture;
+          fixture = input.fixture as Fixture;
           snapshot = next;
         } else if (url.pathname === "/api/generate") {
           if (input.provider !== "meta" && input.provider !== "offline")
@@ -116,10 +126,16 @@ export async function startWorkspace(
             input.provider === "meta"
               ? await generateWithMeta(snapshot)
               : offlinePlan(snapshot);
+          const before = runtime.audit(snapshot);
+          const affected = impact(deployedSnapshot, snapshot, runtime.generation);
+          const from = deployedSnapshot.hash;
           runtime.deploy(generation, snapshot);
+          regeneration = { before, after: runtime.audit(snapshot), affected, from, to: snapshot.hash };
           deployedSnapshot = snapshot;
-        } else if (url.pathname === "/api/traverse") {
-          await traverse(runtime, decoyURL);
+          explorer = null;
+        } else if (url.pathname === "/api/explore") {
+          if (input.provider !== "meta" && input.provider !== "offline") throw new Error("Choose an explorer provider explicitly.");
+          explorer = await explore({ entryURL: decoyURL + runtime.entryPath, provider: input.provider, marker: () => runtime.createDemoMarker() });
         } else return json(res, 404, { error: "Unknown operation." });
         busy = false;
         return json(res, 200, state());

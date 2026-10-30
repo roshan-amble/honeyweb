@@ -16,3 +16,11 @@ export interface Order {
 app.get("/api/customers", () => {});
 app.get("/api/orders", () => {});
 app.post("/api/orders", () => {});
+export interface Invoice {
+  id: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  status: string;
+}
+app.get("/api/invoices", () => {});

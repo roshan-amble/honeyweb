@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { Snapshot } from "../src/scanner.ts";
+import type { ExplorerReport } from "../src/explorer.ts";
+import type { Check, impact } from "../src/data.ts";
 import type { Generation } from "../src/plan.ts";
 import type { Interaction } from "../src/runtime.ts";
 import "./style.css";
 
 type State = {
-  fixture: "v1" | "v2";
+  fixture: "v1" | "v2" | "custom";
+  customSource: boolean;
+  checks: Check[];
+  affected: ReturnType<typeof impact>;
+  explorer: ExplorerReport | null;
+  regeneration: { before: Check[]; after: Check[]; affected: ReturnType<typeof impact>; from: string; to: string } | null;
   snapshot: Snapshot;
   generation: Generation;
   deploymentId: string;
@@ -48,15 +55,46 @@ function Icon({
     </svg>
   );
 }
+function Graph({ generation, events }: { generation: Generation; events: Interaction[] }) {
+  const nodes = generation.plan.nodes;
+  const collections = nodes.filter(n => n.kind === "collection");
+  const height = Math.max(230, collections.length * 130 + 35);
+  const positions = new Map(nodes.map(node => {
+    const row = collections.findIndex(n => n.entity === node.entity);
+    return [node.id, { x: node.kind === "breadcrumb" ? 15 : node.kind === "collection" ? 345 : 675, y: node.kind === "breadcrumb" ? height / 2 - 46 : 25 + Math.max(0, row) * 130 }];
+  }));
+  return <svg className="branch-graph" viewBox={`0 0 980 ${height}`} role="img" aria-label={`Deception graph with ${nodes.length} endpoints and ${generation.plan.edges.length} links`}>
+    <defs><marker id="arrow-tip" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="#739485" /></marker></defs>
+    {generation.plan.edges.map(edge => {
+      const a = positions.get(edge.from)!, b = positions.get(edge.to)!;
+      const cross = a.x === b.x;
+      const path = cross ? `M ${a.x + 20} ${a.y + 90} C ${a.x - 55} ${a.y + 110}, ${b.x - 55} ${b.y + 10}, ${b.x} ${b.y + 45}` : `M ${a.x + 270} ${a.y + 45} C ${a.x + 300} ${a.y + 45}, ${b.x - 30} ${b.y + 45}, ${b.x} ${b.y + 45}`;
+      return <path key={`${edge.from}-${edge.to}`} d={path} fill="none" stroke={cross ? "#bb9458" : "#739485"} strokeWidth="1.5" strokeDasharray={cross ? "4 3" : undefined} markerEnd="url(#arrow-tip)" />;
+    })}
+    {nodes.map(node => {
+      const p = positions.get(node.id)!;
+      const hits = events.filter(e => e.node === node.id && e.status === 200).length;
+      return <g key={node.id} transform={`translate(${p.x},${p.y})`} className={hits ? "svg-node visited" : "svg-node"}>
+        <title>{node.label}: GET {node.path} · {hits} successful requests</title>
+        <rect width="270" height="90" rx="8" />
+        <text x="15" y="21" className="svg-kind">{node.kind.toUpperCase()} · {hits} HITS</text>
+        <text x="15" y="45" className="svg-label">{node.label.length > 32 ? node.label.slice(0, 29) + "…" : node.label}</text>
+        <text x="15" y="69" className="svg-path">{node.path.length > 37 ? node.path.slice(0, 34) + "…" : node.path}</text>
+      </g>;
+    })}
+  </svg>;
+}
 function App() {
   const [state, setState] = useState<State | null>(null);
   const [fixture, setFixture] = useState("v1");
   const [provider, setProvider] = useState("offline");
+  const [explorerProvider, setExplorerProvider] = useState("offline");
   const [working, setWorking] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
     let alive = true;
+    let initialized = false;
     const poll = async () => {
       try {
         const response = await fetch("/api/state");
@@ -65,7 +103,7 @@ function App() {
             "Workspace unavailable. Open the 127.0.0.1 URL printed by npm start.",
           );
         const next = await response.json();
-        if (alive) setState(next);
+        if (alive) { setState(next); if (!initialized) { setFixture(next.fixture); initialized = true; } }
       } catch (e) {
         if (alive)
           setError(e instanceof Error ? e.message : "Connection lost.");
@@ -119,13 +157,11 @@ function App() {
   );
   const complete = new Set(
     currentEvents
-      .filter((e) => e.node === "export" && e.status === 200)
+      .filter((e) => generation.plan.nodes.some(n => n.id === e.node && n.kind === "export") && e.status === 200)
       .map((e) => e.session),
   );
   const disabled = Boolean(working) || state.busy;
-  const nodes = ["entry", "records", "export"].map(
-    (id) => generation.plan.nodes.find((n) => n.id === id)!,
-  );
+  const nodes = generation.plan.nodes;
   return (
     <div className="workspace">
       <aside className="sidebar">
@@ -139,7 +175,7 @@ function App() {
         <div className="project">
           <span className="project-icon">A</span>
           <div>
-            Acme application<small>TypeScript · Express</small>
+            {state.fixture === "custom" ? "Custom application" : "Acme application"}<small>TypeScript · Express</small>
           </div>
           <span className="project-dot" />
         </div>
@@ -149,7 +185,7 @@ function App() {
           </a>
           <a href="#graph">
             <Icon name="graph" /> Deception graph{" "}
-            <span className="nav-count">3</span>
+            <span className="nav-count">{nodes.length}</span>
           </a>
           <a href="#activity">
             <Icon name="pulse" /> Activity{" "}
@@ -160,7 +196,7 @@ function App() {
           </a>
         </nav>
         <div className="sidebar-note">
-          <span className="small-orb" /> Isolated by design
+          <span className="small-orb" /> Local synthetic environment
           <p>
             Loopback listeners.
             <br />
@@ -172,7 +208,7 @@ function App() {
         <div className="sidebar-bottom">
           <span className="version">H</span>
           <div>
-            Honeyweb prototype<small>v0.1 · Meta hackathon</small>
+            Honeyweb prototype<small>v0.2 · Meta hackathon</small>
           </div>
         </div>
       </aside>
@@ -223,6 +259,7 @@ function App() {
                   >
                     <option value="v1">acme / v1 · Customer</option>
                     <option value="v2">acme / v2 · Account</option>
+                    {state.customSource && <option value="custom">Custom source · rescan</option>}
                   </select>
                   <button
                     disabled={disabled}
@@ -272,25 +309,27 @@ function App() {
                 </div>
               </div>
             </div>
-            <button
-              className="primary"
-              disabled={disabled}
-              onClick={() =>
-                void action(
-                  "traverse",
-                  {},
-                  "Completed 3 real HTTP requests through the connected decoys. Demo traffic is labeled in the log.",
-                )
-              }
-            >
-              <Icon name="arrow" />
-              {working === "traverse" ? "Traversing…" : "Run demo traversal"}
-            </button>
+            <div className="control-block">
+              <span className="step">03</span>
+              <div>
+                <label htmlFor="explorer-provider">INDEPENDENT EXPLORER</label>
+                <div className="input-row">
+                  <select id="explorer-provider" value={explorerProvider} onChange={e => setExplorerProvider(e.target.value)} disabled={disabled}>
+                    <option value="offline">Link-following baseline</option>
+                    <option value="meta">Meta explorer</option>
+                  </select>
+                  <button className="primary" disabled={disabled || (explorerProvider === "meta" && !state.metaConfigured)}
+                    onClick={() => void action("explore", { provider: explorerProvider }, "Explorer finished. Inspect its observed trail and consistency checks below.")}>
+                    {working === "explore" ? "Exploring…" : "Explore"}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           {provider === "meta" && (
             <div className="info-note">
               {state.metaConfigured
-                ? "Meta receives the bundled fixture’s route and interface metadata. A successful response is validated before deployment."
+                ? "Meta receives the selected source’s route and interface metadata. A successful response is validated before deployment."
                 : "Live generation needs MODEL_API_KEY in your local .env file, then a server restart. Offline mode makes no model calls."}
             </div>
           )}
@@ -306,9 +345,9 @@ function App() {
             <div>
               <span>CONNECTED DECOYS</span>
               <strong>
-                03 <small>validated endpoints</small>
+                {String(nodes.length).padStart(2, "0")} <small>validated endpoints</small>
               </strong>
-              <p>Breadcrumb → collection → export</p>
+              <p>{generation.plan.relationships.length} cross-entity references · shared synthetic records</p>
             </div>
             <div>
               <span>OBSERVED SESSIONS</span>
@@ -349,44 +388,7 @@ function App() {
                 <span className="small-orb" /> DEPLOYED · {state.decoyURL}
                 <span>READ-ONLY SURFACES</span>
               </div>
-              <div className="graph-nodes">
-                {nodes.map((node, i) => {
-                  const hits = currentEvents.filter(
-                    (e) => e.node === node.id && e.status === 200,
-                  ).length;
-                  return (
-                    <React.Fragment key={node.id}>
-                      {i > 0 && (
-                        <div className={`connector ${hits ? "lit" : ""}`}>
-                          <span>{i === 1 ? "credential" : "export link"}</span>
-                          <div />
-                          <b>›</b>
-                        </div>
-                      )}
-                      <article className={`decoy ${hits ? "visited" : ""}`}>
-                        <div className="decoy-top">
-                          <span className="node-symbol">
-                            {i === 0 ? "{ }" : i === 1 ? "▤" : "↓"}
-                          </span>
-                          <span className="node-order">0{i + 1}</span>
-                        </div>
-                        <span className="node-kind">{node.kind}</span>
-                        <h3>{node.label}</h3>
-                        <code>GET {node.path}</code>
-                        <div className="node-footer">
-                          <span className={hits ? "live" : ""}>
-                            <span className="small-orb" />
-                            {hits
-                              ? "Interaction recorded"
-                              : "Awaiting interaction"}
-                          </span>
-                          <strong>{hits}</strong>
-                        </div>
-                      </article>
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+              <Graph generation={generation} events={currentEvents} />
               <div className="graph-legend">
                 <span>
                   <i className="legend-node" />
@@ -403,6 +405,28 @@ function App() {
               <span>PLAN RATIONALE</span>
               <p>{generation.plan.rationale}</p>
             </div>
+          </section>
+          <section className="panel explorer-panel" id="explorer">
+            <div className="panel-heading"><div><h2>Independent exploration</h2><p>Entry URL + HTTP observations. No source access or hidden graph.</p></div>
+              <span className="tag">{state.explorer ? state.explorer.provider === "meta" ? "Meta agent" : "Deterministic baseline" : "12-request budget"}</span>
+            </div>
+            {state.explorer ? <>
+              <div className="explorer-metrics">
+                <div><strong>{state.explorer.metrics.uniquePaths}</strong><span>paths discovered</span></div>
+                <div><strong>{state.explorer.metrics.maxDepth}</strong><span>discovery depth</span></div>
+                <div><strong>{state.explorer.metrics.consistencyChecks - state.explorer.metrics.consistencyFailures}/{state.explorer.metrics.consistencyChecks}</strong><span>observed checks passed</span></div>
+                <div><strong>{(state.explorer.metrics.elapsedMs / 1000).toFixed(1)}s</strong><span>{state.explorer.metrics.modelCalls} model calls</span></div>
+              </div>
+              <div className="table-wrap"><table><thead><tr><th>HTTP PATH</th><th>ACTION</th><th>RESULT</th></tr></thead><tbody>
+                {state.explorer.steps.map((step, i) => <tr key={i}><td className="mono">{step.path}</td><td>{step.reason}</td><td>{step.status} · {step.records} records</td></tr>)}
+              </tbody></table></div>
+              <div className="panel-foot">Stopped: {state.explorer.stopReason} · {state.explorer.metrics.inputTokens} input / {state.explorer.metrics.outputTokens} output tokens. {state.explorer.issues.join("; ")}</div>
+            </> : <div className="explorer-empty">Choose Meta to let a model select observed links, or use the explicit offline baseline. The explorer checks exports and foreign keys only when it has seen both sides.</div>}
+          </section>
+          <section className="panel checks-panel">
+            <div className="panel-heading"><div><h2>Source consistency</h2><p>Deployed records checked against the currently scanned schema.</p></div><span className={`tag ${state.checks.every(c => c.passed) ? "green" : "warning"}`}>{state.checks.filter(c => c.passed).length}/{state.checks.length} passed</span></div>
+            <div className="check-list">{state.checks.map(check => <div key={check.check} className={check.passed ? "check-pass" : "check-fail"}><span>{check.passed ? "✓" : "!"}</span>{check.detail}</div>)}</div>
+            {state.regeneration && <div className="panel-foot">Last regeneration: {state.regeneration.before.filter(c => !c.passed).length} failing checks before → {state.regeneration.after.filter(c => !c.passed).length} after · {state.regeneration.affected.nodes.length} affected endpoints · credentials rotated.</div>}
           </section>
           <div className="lower-grid">
             <section className="panel" id="activity">
@@ -471,9 +495,9 @@ function App() {
                   <Icon name="pulse" />
                   <h3>Your trail is ready.</h3>
                   <p>
-                    Run a demo traversal to watch a credential lead
+                    Run the explorer to watch it discover branches,
                     <br />
-                    from the first breadcrumb to the final export.
+                    related records, and exports from response links.
                   </p>
                 </div>
               )}
@@ -508,7 +532,7 @@ function App() {
                     <p>
                       {state.drift.routes.added.length} routes added ·{" "}
                       {state.drift.routes.removed.length} removed. Generate a
-                      new plan to align the decoys with this snapshot.
+                      new plan to align the decoys with this snapshot. Affected endpoints: {state.affected.nodes.map(n => n.label).join(", ") || "none"}.
                     </p>
                   </div>
                 )}

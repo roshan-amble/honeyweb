@@ -1,0 +1,352 @@
+{
+  "result": "passed",
+  "createdAt": "2026-10-30T22:51:58.127Z",
+  "provider": "offline",
+  "protocol": "One run per environment; 12 GET budget; same explorer policy. Only a supplied entry URL and observed response links. Generic static baseline has one flat collection. Descriptive fixture simulation, not a real-attacker efficacy benchmark. Tokens are measured; dollar cost is not estimated.",
+  "generation": [
+    {
+      "snapshotHash": "36f6898b678dc116dba9956ce86979acd5f0c1bc97125c4c203cb8d846da25da",
+      "model": "deterministic",
+      "nodes": 7,
+      "latencyMs": 0,
+      "usage": null
+    },
+    {
+      "snapshotHash": "da848ce36a5ad7ad1fb00ce0a86ffe42d63c849a7453b1eade3d5f733caf18de",
+      "model": "deterministic",
+      "nodes": 7,
+      "latencyMs": 0,
+      "usage": null
+    }
+  ],
+  "regeneration": {
+    "affected": {
+      "changedEntities": [
+        "Customer",
+        "Order",
+        "Invoice",
+        "Account"
+      ],
+      "nodes": [
+        {
+          "id": "entry",
+          "label": "Integration workspace",
+          "entity": ""
+        },
+        {
+          "id": "records-0",
+          "label": "Customer archive",
+          "entity": "Customer"
+        },
+        {
+          "id": "export-0",
+          "label": "Customer snapshot",
+          "entity": "Customer"
+        },
+        {
+          "id": "records-1",
+          "label": "Order archive",
+          "entity": "Order"
+        },
+        {
+          "id": "export-1",
+          "label": "Order snapshot",
+          "entity": "Order"
+        },
+        {
+          "id": "records-2",
+          "label": "Invoice archive",
+          "entity": "Invoice"
+        },
+        {
+          "id": "export-2",
+          "label": "Invoice snapshot",
+          "entity": "Invoice"
+        }
+      ],
+      "routeChanges": true
+    },
+    "beforeChecks": [
+      {
+        "check": "schema:Customer",
+        "passed": false,
+        "detail": "Customer records no longer match the source fields"
+      },
+      {
+        "check": "schema:Order",
+        "passed": false,
+        "detail": "Order records no longer match the source fields"
+      },
+      {
+        "check": "ids:Order",
+        "passed": true,
+        "detail": "Order IDs are unique"
+      },
+      {
+        "check": "schema:Invoice",
+        "passed": false,
+        "detail": "Invoice records no longer match the source fields"
+      },
+      {
+        "check": "ids:Invoice",
+        "passed": true,
+        "detail": "Invoice IDs are unique"
+      },
+      {
+        "check": "reference:Order.customerId",
+        "passed": true,
+        "detail": "Order.customerId → Customer.id"
+      },
+      {
+        "check": "reference:Invoice.orderId",
+        "passed": true,
+        "detail": "Invoice.orderId → Order.id"
+      }
+    ],
+    "afterChecks": [
+      {
+        "check": "schema:Account",
+        "passed": true,
+        "detail": "4 records match Account"
+      },
+      {
+        "check": "ids:Account",
+        "passed": true,
+        "detail": "Account IDs are unique"
+      },
+      {
+        "check": "schema:Order",
+        "passed": true,
+        "detail": "4 records match Order"
+      },
+      {
+        "check": "ids:Order",
+        "passed": true,
+        "detail": "Order IDs are unique"
+      },
+      {
+        "check": "schema:Invoice",
+        "passed": true,
+        "detail": "4 records match Invoice"
+      },
+      {
+        "check": "ids:Invoice",
+        "passed": true,
+        "detail": "Invoice IDs are unique"
+      },
+      {
+        "check": "reference:Order.accountId",
+        "passed": true,
+        "detail": "Order.accountId → Account.id"
+      },
+      {
+        "check": "reference:Invoice.orderId",
+        "passed": true,
+        "detail": "Invoice.orderId → Order.id"
+      }
+    ]
+  },
+  "environments": {
+    "before": {
+      "provider": "offline",
+      "model": "link-following baseline",
+      "stopReason": "frontier-exhausted",
+      "steps": [
+        {
+          "path": "/internal/integration-config",
+          "status": 200,
+          "depth": 0,
+          "reason": "Inspect the supplied entry URL.",
+          "entity": null,
+          "kind": "breadcrumb",
+          "records": 0
+        },
+        {
+          "path": "/api/customer-archive",
+          "status": 200,
+          "depth": 1,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Customer",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/order-archive",
+          "status": 200,
+          "depth": 1,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Order",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/invoice-archive",
+          "status": 200,
+          "depth": 1,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Invoice",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/exports/customer-snapshot",
+          "status": 200,
+          "depth": 2,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Customer",
+          "kind": "export",
+          "records": 4
+        },
+        {
+          "path": "/exports/order-snapshot",
+          "status": 200,
+          "depth": 2,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Order",
+          "kind": "export",
+          "records": 4
+        },
+        {
+          "path": "/exports/invoice-snapshot",
+          "status": 200,
+          "depth": 2,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Invoice",
+          "kind": "export",
+          "records": 4
+        }
+      ],
+      "issues": [],
+      "metrics": {
+        "requests": 7,
+        "successfulRequests": 7,
+        "uniquePaths": 7,
+        "maxDepth": 2,
+        "entities": 3,
+        "exports": 3,
+        "consistencyChecks": 5,
+        "consistencyFailures": 0,
+        "elapsedMs": 29,
+        "modelCalls": 0,
+        "inputTokens": 0,
+        "outputTokens": 0
+      }
+    },
+    "after": {
+      "provider": "offline",
+      "model": "link-following baseline",
+      "stopReason": "frontier-exhausted",
+      "steps": [
+        {
+          "path": "/internal/integration-config",
+          "status": 200,
+          "depth": 0,
+          "reason": "Inspect the supplied entry URL.",
+          "entity": null,
+          "kind": "breadcrumb",
+          "records": 0
+        },
+        {
+          "path": "/api/account-archive",
+          "status": 200,
+          "depth": 1,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Account",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/order-archive",
+          "status": 200,
+          "depth": 1,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Order",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/invoice-archive",
+          "status": 200,
+          "depth": 1,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Invoice",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/exports/account-snapshot",
+          "status": 200,
+          "depth": 2,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Account",
+          "kind": "export",
+          "records": 4
+        },
+        {
+          "path": "/exports/order-snapshot",
+          "status": 200,
+          "depth": 2,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Order",
+          "kind": "export",
+          "records": 4
+        },
+        {
+          "path": "/exports/invoice-snapshot",
+          "status": 200,
+          "depth": 2,
+          "reason": "Follow the next previously unseen response link.",
+          "entity": "Invoice",
+          "kind": "export",
+          "records": 4
+        }
+      ],
+      "issues": [],
+      "metrics": {
+        "requests": 7,
+        "successfulRequests": 7,
+        "uniquePaths": 7,
+        "maxDepth": 2,
+        "entities": 3,
+        "exports": 3,
+        "consistencyChecks": 5,
+        "consistencyFailures": 0,
+        "elapsedMs": 7,
+        "modelCalls": 0,
+        "inputTokens": 0,
+        "outputTokens": 0
+      }
+    },
+    "staticBaseline": {
+      "provider": "offline",
+      "model": "link-following baseline",
+      "stopReason": "frontier-exhausted",
+      "steps": [
+        {
+          "path": "/internal/integration-config",
+          "status": 200,
+          "depth": 0,
+          "reason": "Inspect the supplied entry URL.",
+          "entity": "Record",
+          "kind": "collection",
+          "records": 1
+        }
+      ],
+      "issues": [],
+      "metrics": {
+        "requests": 1,
+        "successfulRequests": 1,
+        "uniquePaths": 1,
+        "maxDepth": 0,
+        "entities": 1,
+        "exports": 0,
+        "consistencyChecks": 0,
+        "consistencyFailures": 0,
+        "elapsedMs": 2,
+        "modelCalls": 0,
+        "inputTokens": 0,
+        "outputTokens": 0
+      }
+    }
+  }
+}

@@ -2,19 +2,28 @@
 
 ## Preparation
 
-Run `npm ci && npm run check && npm start`. Set `MODEL_API_KEY` in `.env` first for the actual Meta version. Rehearse a successful generation with your account; the offline fixture is only a development fallback and must be labeled as such.
+Run `npm ci --ignore-scripts && npm run check && npm start`. Configure `MODEL_API_KEY` privately for actual Meta generation and exploration. The GitHub secret does not set a local key. Rehearse both fixture versions. Use only synthetic Acme source; keep keys, `.env` and actual customer code off screen.
 
-Use only the synthetic Acme fixtures. Record the dashboard and source side by side. Never display `.env`, the key, real customer source, or a production endpoint. Successful generation replaces the current graph and rotates credentials.
+The longer evaluation command creates reproducible evidence: `npm run evaluate -- --meta --output=meta-evaluation.json`. A workflow artifact can prove a previous live run, but do not narrate it as a newly executed request.
 
 ## Storyboard
 
-| Time      | Action                                                                          | Point to explain                                                                                                                                                    |
-| --------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0:00–0:20 | Open the `Customer` fixture and source intelligence.                            | Generic decoys can look unlike the application and become stale. We derive a constrained deception plan from source metadata.                                       |
-| 0:20–0:55 | Select Meta and generate. Show the resulting endpoints and rationale.           | Meta chooses a credible naming scheme and entity. Runtime validates the graph and controls execution. No arbitrary model code runs.                                 |
-| 0:55–1:35 | Run traversal. Show the three correlated HTTP events.                           | A breadcrumb leads to a decoy-only credential, records, and an export. These are real HTTP responses and telemetry; the traffic is our labeled demo.                |
-| 1:35–2:15 | Scan v2. Show the renamed route and added `region` field. Regenerate with Meta. | A source change makes the old graph stale. Regeneration aligns the deception surface with the new metadata.                                                         |
-| 2:15–2:40 | Traverse the new graph and inspect the schema.                                  | Record consistency, state transitions, credential rotation, and drift are actual application behavior.                                                              |
-| 2:40–3:00 | Close on next validation.                                                       | We will test credibility, integration effort, and useful signal against a declared baseline. This is a local prototype, not proof of production detection accuracy. |
+| Time | Show | Narration |
+| --- | --- | --- |
+| 0:00–0:20 | Customer, Order and Invoice source interfaces | “Decoys become easy to recognize when their data disagrees with the application or drifts out of date. Honeyweb builds a connected synthetic environment from an authorized source snapshot.” |
+| 0:20–0:50 | Meta generator, branching graph and rationale | “Meta designs this graph from route and schema metadata. The runtime validates every endpoint and reference, then supplies consistent synthetic records. No model-generated code runs.” |
+| 0:50–1:30 | Meta explorer and its observed HTTP trail | “This second model gets only an entry URL. It discovers links from actual responses and chooses what to inspect. It has no source or hidden graph. These requests are our labeled simulation.” |
+| 1:30–2:05 | Scan v2; highlight three failed schema checks and affected endpoints | “The application changed: customers became accounts, the order reference changed, and invoices gained a due date. Honeyweb shows exactly where the deployed data became stale.” |
+| 2:05–2:35 | Regenerate; show before/after checks and explore again | “A candidate must pass consistency checks before replacing the environment. References and exports stay aligned, and old credentials are invalidated.” |
+| 2:35–3:00 | Evaluation evidence and limits | “The fixture evaluation measures discovery depth, observed consistency, latency and tokens against a declared static baseline. This proves the integration and feedback loop, not production detection accuracy. Next is independent credibility testing and process isolation.” |
 
-Keep the model request within the recording budget; if it is slow, use an honestly labeled edit or recorded successful generation. Never replace a failed model request with a fixture while describing it as live.
+Edit model waiting time only with a visible “generation time condensed” label. Preserve the observed runtime in the evidence panel. Never describe an offline fallback as Meta output. Keep the final hosted video accessible without a login.
+
+## Recording checklist
+
+- Show the Meta-generated badge and actual explorer provider.
+- Include a branch choice, a cross-entity reference and a matching export.
+- Show source failure before regeneration and passing checks afterward.
+- Distinguish generator reasoning summaries from deterministic runtime constraints.
+- Close on the public repo and realistic next validation step.
+- Verify final video duration is at most three minutes and its link is accessible.
