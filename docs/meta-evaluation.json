@@ -1,0 +1,358 @@
+{
+  "result": "passed",
+  "createdAt": "2026-10-30T22:58:05.994Z",
+  "provider": "meta",
+  "protocol": "One run per environment; 12 GET budget; same explorer policy. Only a supplied entry URL and observed response links. Generic static baseline has one flat collection. Descriptive fixture simulation, not a real-attacker efficacy benchmark. Tokens are measured; dollar cost is not estimated.",
+  "generation": [
+    {
+      "snapshotHash": "36f6898b678dc116dba9956ce86979acd5f0c1bc97125c4c203cb8d846da25da",
+      "model": "muse-spark-1.3",
+      "nodes": 7,
+      "latencyMs": 12217,
+      "usage": {
+        "inputTokens": 795,
+        "outputTokens": 3042
+      }
+    },
+    {
+      "snapshotHash": "da848ce36a5ad7ad1fb00ce0a86ffe42d63c849a7453b1eade3d5f733caf18de",
+      "model": "muse-spark-1.3",
+      "nodes": 7,
+      "latencyMs": 14725,
+      "usage": {
+        "inputTokens": 811,
+        "outputTokens": 3762
+      }
+    }
+  ],
+  "regeneration": {
+    "affected": {
+      "changedEntities": [
+        "Customer",
+        "Order",
+        "Invoice",
+        "Account"
+      ],
+      "nodes": [
+        {
+          "id": "entry",
+          "label": "Service entry",
+          "entity": ""
+        },
+        {
+          "id": "customers",
+          "label": "Customers list from /api/customers",
+          "entity": "Customer"
+        },
+        {
+          "id": "orders",
+          "label": "Orders list from /api/orders",
+          "entity": "Order"
+        },
+        {
+          "id": "invoices",
+          "label": "Invoices list from /api/invoices",
+          "entity": "Invoice"
+        },
+        {
+          "id": "customers-export",
+          "label": "Customers export snapshot",
+          "entity": "Customer"
+        },
+        {
+          "id": "orders-export",
+          "label": "Orders export snapshot",
+          "entity": "Order"
+        },
+        {
+          "id": "invoices-export",
+          "label": "Invoices export snapshot",
+          "entity": "Invoice"
+        }
+      ],
+      "routeChanges": true
+    },
+    "beforeChecks": [
+      {
+        "check": "schema:Customer",
+        "passed": false,
+        "detail": "Customer records no longer match the source fields"
+      },
+      {
+        "check": "schema:Order",
+        "passed": false,
+        "detail": "Order records no longer match the source fields"
+      },
+      {
+        "check": "ids:Order",
+        "passed": true,
+        "detail": "Order IDs are unique"
+      },
+      {
+        "check": "schema:Invoice",
+        "passed": false,
+        "detail": "Invoice records no longer match the source fields"
+      },
+      {
+        "check": "ids:Invoice",
+        "passed": true,
+        "detail": "Invoice IDs are unique"
+      },
+      {
+        "check": "reference:Order.customerId",
+        "passed": true,
+        "detail": "Order.customerId \u2192 Customer.id"
+      },
+      {
+        "check": "reference:Invoice.orderId",
+        "passed": true,
+        "detail": "Invoice.orderId \u2192 Order.id"
+      }
+    ],
+    "afterChecks": [
+      {
+        "check": "schema:Account",
+        "passed": true,
+        "detail": "4 records match Account"
+      },
+      {
+        "check": "ids:Account",
+        "passed": true,
+        "detail": "Account IDs are unique"
+      },
+      {
+        "check": "schema:Order",
+        "passed": true,
+        "detail": "4 records match Order"
+      },
+      {
+        "check": "ids:Order",
+        "passed": true,
+        "detail": "Order IDs are unique"
+      },
+      {
+        "check": "schema:Invoice",
+        "passed": true,
+        "detail": "4 records match Invoice"
+      },
+      {
+        "check": "ids:Invoice",
+        "passed": true,
+        "detail": "Invoice IDs are unique"
+      },
+      {
+        "check": "reference:Order.accountId",
+        "passed": true,
+        "detail": "Order.accountId \u2192 Account.id"
+      },
+      {
+        "check": "reference:Invoice.orderId",
+        "passed": true,
+        "detail": "Invoice.orderId \u2192 Order.id"
+      }
+    ]
+  },
+  "environments": {
+    "before": {
+      "provider": "meta",
+      "model": "muse-spark-1.3",
+      "stopReason": "frontier-exhausted",
+      "steps": [
+        {
+          "path": "/entry",
+          "status": 200,
+          "depth": 0,
+          "reason": "Inspect the supplied entry URL.",
+          "entity": null,
+          "kind": "breadcrumb",
+          "records": 0
+        },
+        {
+          "path": "/api/customers",
+          "status": 200,
+          "depth": 1,
+          "reason": "Inspect customers collection to enumerate related records.",
+          "entity": "Customer",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/orders",
+          "status": 200,
+          "depth": 1,
+          "reason": "Inspect orders collection to find related records",
+          "entity": "Order",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/invoices",
+          "status": 200,
+          "depth": 2,
+          "reason": "Check invoices list for connected entities and further links",
+          "entity": "Invoice",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/customers/export",
+          "status": 200,
+          "depth": 2,
+          "reason": "Inspect customers export to reveal full records beyond partial list",
+          "entity": "Customer",
+          "kind": "export",
+          "records": 4
+        },
+        {
+          "path": "/api/orders/export",
+          "status": 200,
+          "depth": 2,
+          "reason": "Check orders export for full records and further links",
+          "entity": "Order",
+          "kind": "export",
+          "records": 4
+        },
+        {
+          "path": "/api/invoices/export",
+          "status": 200,
+          "depth": 3,
+          "reason": "Inspect invoices export snapshot to complete entity coverage",
+          "entity": "Invoice",
+          "kind": "export",
+          "records": 4
+        }
+      ],
+      "issues": [],
+      "metrics": {
+        "requests": 7,
+        "successfulRequests": 7,
+        "uniquePaths": 7,
+        "maxDepth": 3,
+        "entities": 3,
+        "exports": 3,
+        "consistencyChecks": 5,
+        "consistencyFailures": 0,
+        "elapsedMs": 19440,
+        "modelCalls": 6,
+        "inputTokens": 4189,
+        "outputTokens": 2976
+      }
+    },
+    "after": {
+      "provider": "meta",
+      "model": "muse-spark-1.3",
+      "stopReason": "frontier-exhausted",
+      "steps": [
+        {
+          "path": "/index",
+          "status": 200,
+          "depth": 0,
+          "reason": "Inspect the supplied entry URL.",
+          "entity": null,
+          "kind": "breadcrumb",
+          "records": 0
+        },
+        {
+          "path": "/api/accounts",
+          "status": 200,
+          "depth": 1,
+          "reason": "Explore Account Directory to map connected entities",
+          "entity": "Account",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/accounts/export",
+          "status": 200,
+          "depth": 2,
+          "reason": "Fetch account roster export linked from directory to see full records.",
+          "entity": "Account",
+          "kind": "export",
+          "records": 4
+        },
+        {
+          "path": "/api/orders",
+          "status": 200,
+          "depth": 1,
+          "reason": "Inspect Order Ledger collection to enumerate orders and linked entities",
+          "entity": "Order",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/invoices",
+          "status": 200,
+          "depth": 1,
+          "reason": "Explore new Invoice collection to reveal records and relations",
+          "entity": "Invoice",
+          "kind": "collection",
+          "records": 4
+        },
+        {
+          "path": "/api/orders/export",
+          "status": 200,
+          "depth": 2,
+          "reason": "Explore unvisited order export to follow Order-Account linkage",
+          "entity": "Order",
+          "kind": "export",
+          "records": 4
+        },
+        {
+          "path": "/api/invoices/export",
+          "status": 200,
+          "depth": 2,
+          "reason": "Inspect invoice batch export to complete entity coverage.",
+          "entity": "Invoice",
+          "kind": "export",
+          "records": 4
+        }
+      ],
+      "issues": [],
+      "metrics": {
+        "requests": 7,
+        "successfulRequests": 7,
+        "uniquePaths": 7,
+        "maxDepth": 2,
+        "entities": 3,
+        "exports": 3,
+        "consistencyChecks": 5,
+        "consistencyFailures": 0,
+        "elapsedMs": 20416,
+        "modelCalls": 6,
+        "inputTokens": 4029,
+        "outputTokens": 3629
+      }
+    },
+    "staticBaseline": {
+      "provider": "meta",
+      "model": "link-following baseline",
+      "stopReason": "frontier-exhausted",
+      "steps": [
+        {
+          "path": "/index",
+          "status": 200,
+          "depth": 0,
+          "reason": "Inspect the supplied entry URL.",
+          "entity": "Record",
+          "kind": "collection",
+          "records": 1
+        }
+      ],
+      "issues": [],
+      "metrics": {
+        "requests": 1,
+        "successfulRequests": 1,
+        "uniquePaths": 1,
+        "maxDepth": 0,
+        "entities": 1,
+        "exports": 0,
+        "consistencyChecks": 0,
+        "consistencyFailures": 0,
+        "elapsedMs": 1,
+        "modelCalls": 0,
+        "inputTokens": 0,
+        "outputTokens": 0
+      }
+    }
+  }
+}

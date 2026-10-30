@@ -204,3 +204,19 @@ test("workspace requires same origin and a startup-authorized source root", asyn
   const result = await (await post(app.adminURL, "/api/explore", { provider: "offline" })).json() as any;
   assert.equal(result.explorer.metrics.requests, 3);
 });
+
+test("response-only consistency checks detect broken references and mismatched exports", async t => {
+  const bodies: Record<string, unknown> = {
+    "/start": { links: [{ href: "/customers" }, { href: "/orders" }, { href: "/customer-export" }] },
+    "/customers": { entity: "Customer", kind: "collection", records: [{ id: "c1" }], links: [] },
+    "/orders": { entity: "Order", kind: "collection", records: [{ id: "o1", customerId: "missing" }], relationships: [{ from: "Order", field: "customerId", to: "Customer", target: "id" }], links: [] },
+    "/customer-export": { entity: "Customer", kind: "export", records: [{ id: "different" }], links: [] },
+  };
+  const server = createServer((req, res) => { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(bodies[req.url!])); });
+  await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve)); t.after(() => server.close());
+  const report = await explore({ entryURL: `http://127.0.0.1:${(server.address() as { port: number }).port}/start`, provider: "offline" });
+  assert.equal(report.metrics.consistencyChecks, 2);
+  assert.equal(report.metrics.consistencyFailures, 2);
+  assert.ok(report.issues.some(issue => issue.startsWith("Broken reference")));
+  assert.ok(report.issues.some(issue => issue.includes("export differs")));
+});

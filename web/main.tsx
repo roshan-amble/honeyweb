@@ -383,7 +383,8 @@ function App() {
                   : "In sync with source"}
               </span>
             </div>
-            <div className="graph-canvas">
+            <div className="graph-scroll-hint">Scroll the graph sideways to inspect all endpoints.</div>
+            <div className="graph-canvas" tabIndex={0} role="region" aria-label="Scrollable deception graph">
               <div className="graph-caption">
                 <span className="small-orb" /> DEPLOYED · {state.decoyURL}
                 <span>READ-ONLY SURFACES</span>

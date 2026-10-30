@@ -4,7 +4,7 @@
 
 Honeyweb scans an authorized TypeScript/Express snapshot, asks Meta to design a branching deception graph, and serves related synthetic records behind disposable credentials. A second Meta-driven explorer receives only an entry URL and HTTP observations. It discovers links, chooses requests, and checks whether related data and exports agree. Source changes expose stale decoys; validated regeneration restores consistency.
 
-Local prototype for the Meta Global AI Developer Hackathon. Public code; no hosted production service. The original live Meta generation passed [this workflow](https://github.com/roshan-amble/honeyweb/actions/runs/41118808357). The expanded v0.2 live evaluation is tracked in [Actions](https://github.com/roshan-amble/honeyweb/actions/workflows/meta-smoke.yml).
+Local prototype for the Meta Global AI Developer Hackathon. Public code; no hosted production service. The original live Meta generation passed [this workflow](https://github.com/roshan-amble/honeyweb/actions/runs/41118808357). The expanded v0.2 [live Meta evaluation passed](https://github.com/roshan-amble/honeyweb/actions/runs/41141387002): two real generations and twelve independent explorer decisions. [Full redacted evidence](docs/meta-evaluation.json) is committed.
 
 ## Run
 
@@ -73,7 +73,7 @@ npm run evaluate -- --meta --output=meta-evaluation.json
 
 The evaluation runs both versions, checks drift before regeneration, then compares the explorer with a deliberately simple static baseline using the same 12-request budget. It records observed paths, depth, consistency checks, latency and actual token usage. Dollar cost is not estimated. Model choices and latency vary.
 
-[Committed offline evidence](docs/offline-evaluation.json): 7/7 reachable endpoints discovered, three entities, three exports, five observed consistency checks, zero failures for each version; three schema failures before regeneration and zero after. The flat static baseline exposes one collection and no further links. This is a **single-run fixture simulation** showing connected behavior, not evidence of real-attacker engagement, deception credibility or improved detection. A zero-failure result with zero checks is not evidence of consistency.
+[Committed offline evidence](docs/offline-evaluation.json): 7/7 reachable endpoints discovered, three entities, three exports, five observed consistency checks, zero failures for each version; three schema failures before regeneration and zero after. The live Meta run also discovered seven endpoints and passed five observed checks in each version, with discovery depth 3 before and 2 after. Exploration took 19.4s and 20.4s respectively. The flat static baseline exposes one collection and no further links. This is a **single-run fixture simulation** showing connected behavior, not evidence of real-attacker engagement, deception credibility or improved detection. A zero-failure result with zero checks is not evidence of consistency.
 
 The manual **Live Meta smoke test** workflow uses the existing encrypted `MODEL_API_KEY` Actions secret. It runs ordinary checks, two Meta generations and at most 22 explorer decisions (24 model calls total), then uploads a redacted synthetic-fixture JSON report. Ordinary CI never uses the key.
 
