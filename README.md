@@ -32,7 +32,7 @@ npm start
 
 Select **Meta model** under Plan generator and **Generate & deploy**. Select **Meta explorer** under Independent explorer, then **Explore**. These are separate model roles, explicitly selected. The GitHub Actions secret is available only to the manual workflow; it does not populate a local `.env`.
 
-Meta's OpenAI-compatible `https://api.meta.ai/v1/chat/completions` API supplies structured JSON. Default model: `muse-spark-1.3`; override with `META_MODEL`. The generator sees extracted routes, interface fields and convention-based references. It chooses entity coverage, endpoint names, graph links and rationale. The explorer sees only response observations and the remaining discovered links, with decoy credentials redacted; it chooses the next HTTP action. No model output becomes executable code. Errors never silently switch to offline mode.
+Meta's OpenAI-compatible `https://api.meta.ai/v1/chat/completions` API supplies structured JSON. Default model: `muse-spark-1.3`; override with `META_MODEL`. The generator sees extracted routes, interface or Prisma scalar fields, and supported references. It chooses entity coverage, endpoint names, graph links and rationale. The dashboard explorer sees only response observations and the remaining discovered links, with decoy credentials redacted; it chooses the next HTTP action. No model output becomes executable code. Errors never silently switch to offline mode.
 
 Only metadata, not source bodies, literals or comments, is sent for generation. Metadata may still be confidential. Explorer observations include synthetic response samples; its HTTP tool retains the disposable credential locally. Use only source you are authorized to scan and share with Meta.
 
@@ -95,7 +95,7 @@ Tests exercise the AST boundary, graph and relationship validation, mocked Meta 
 | `web/` | Graph, explorer evidence, telemetry and source-change dashboard |
 | `scripts/evaluate.ts` | Reproducible paired fixture evaluation and static comparison |
 | `src/routes.ts`, `src/prisma.ts` | Mounted-route and Prisma subset extraction |
-| `src/http-auditor.ts`, `src/lab.ts` | Raw-HTTP evaluator and isolated-process lab gateway |
+| `src/http-auditor.ts`, `src/lab.ts` | Raw-HTTP evaluator and lab gateway with a separate decoy process |
 | `scripts/realworld.ts` | Existing-application case study and matched connected comparison |
 
 The ordinary dashboard operator and decoy listeners share a Node process; separate ports are **not** a sandbox. The case-study lab has an actual application and disposable database integration, but no production database/network integration, durable storage, internet exposure, container isolation, SIEM integration or efficacy claim. The event buffer holds 1,000 entries; at most 500 credentials live for 15 minutes or until redeploy. Credential correlation is not personal identity. Unknown traffic is labeled `unclassified`; demo traffic is explicitly marked.

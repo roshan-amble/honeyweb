@@ -11,7 +11,69 @@ import {
   spawnDecoy,
 } from "../src/lab.ts";
 import { scanRepository } from "../src/scanner.ts";
-import { offlinePlan } from "../src/plan.ts";
+import { offlinePlan, validatePlan } from "../src/plan.ts";
+
+test("graph rejects source parameter names disguised as literal URLs", async () => {
+  const snapshot = await scanRepository("./fixtures/acme-v1");
+  snapshot.routes.push({
+    method: "GET",
+    path: "/api/articles/:slug/comments/:id",
+    file: "test.ts",
+  });
+  const generation = offlinePlan(snapshot);
+  for (const path of ["/api/articles/slug", "/comments/id"]) {
+    const plan = structuredClone(generation.plan);
+    plan.nodes[1].path = path;
+    assert.throws(() => validatePlan(plan, snapshot), /fixed URLs/);
+  }
+  assert.doesNotThrow(() => validatePlan(generation.plan, snapshot));
+});
+
+test("auditor retains only previously submitted observed credentials across public reads and context trimming", async (t) => {
+  const credential = "Bearer hw_decoy_" + "a".repeat(48);
+  let finalHeader: string | undefined;
+  const server = createServer((req, res) => {
+    if (req.url === "/final") finalHeader = req.headers.authorization;
+    res.end(
+      req.url === "/" ? `<p>Lab credential: ${credential}</p>` : "Public page"
+    );
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => server.close());
+  const result = await auditHTTP({
+    startURL: `http://127.0.0.1:${
+      (server.address() as { port: number }).port
+    }/`,
+    provider: "offline",
+    budget: 11,
+    decide: async (view) => {
+      const count = view.visitedRequests.length;
+      if (count === 1) assert.deepEqual(view.observedAuthorizations, []);
+      if (count > 1)
+        assert.deepEqual(view.observedAuthorizations, [credential]);
+      if (count === 10) {
+        assert.ok(
+          !view.observations.some((o) => o.body.includes("Lab credential"))
+        );
+        return {
+          path: "/final",
+          authorization: view.observedAuthorizations[0],
+          reason: "Reuse a previously observed credential.",
+          stop: false,
+        };
+      }
+      return {
+        path: `/page-${count}`,
+        authorization: count === 1 ? credential : "",
+        reason: "Inspect a page.",
+        stop: false,
+      };
+    },
+  });
+  assert.equal(finalHeader, credential);
+  assert.equal(result.metrics.requests, 11);
+  assert.doesNotMatch(JSON.stringify(result), /hw_decoy_[a-f0-9]{48}/);
+});
 
 test("HTTP auditor records bounded response failures without losing the trial", async (t) => {
   const server = createServer((_, res) => res.end("x".repeat(65000)));
@@ -128,7 +190,7 @@ test("HTTP auditor receives raw HTML and response history without hidden navigat
           view = JSON.parse(messages[1].content);
         assert.deepEqual(Object.keys(view).sort(), [
           "observations",
-          "previousAuthorization",
+          "observedAuthorizations",
           "remainingRequests",
           "visitedRequests",
         ]);

@@ -1,0 +1,323 @@
+{
+  "hash": "7f132e129e9030845cb2a119b10442da4c592063355fa568e4dfc7df20017c34",
+  "files": 31,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/articles",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/articles/feed",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/articles",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/articles/:slug",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/articles/:slug",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/articles/:slug",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/articles/:slug/comments",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/articles/:slug/comments",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/articles/:slug/comments/:id",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/articles/:slug/favorite",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/articles/:slug/favorite",
+      "file": "app/routes/article/article.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/users",
+      "file": "app/routes/auth/auth.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/users/login",
+      "file": "app/routes/auth/auth.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/user",
+      "file": "app/routes/auth/auth.controller.ts"
+    },
+    {
+      "method": "PUT",
+      "path": "/user",
+      "file": "app/routes/auth/auth.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/profiles/:username",
+      "file": "app/routes/profile/profile.controller.ts"
+    },
+    {
+      "method": "POST",
+      "path": "/profiles/:username/follow",
+      "file": "app/routes/profile/profile.controller.ts"
+    },
+    {
+      "method": "DELETE",
+      "path": "/profiles/:username/follow",
+      "file": "app/routes/profile/profile.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/tags",
+      "file": "app/routes/tag/tag.controller.ts"
+    },
+    {
+      "method": "GET",
+      "path": "/",
+      "file": "main.ts"
+    }
+  ],
+  "entities": [
+    {
+      "name": "Article",
+      "fields": [
+        {
+          "name": "id",
+          "type": "number"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "slug",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "comments",
+          "type": "array"
+        },
+        {
+          "name": "favorited",
+          "type": "boolean"
+        }
+      ],
+      "file": "app/routes/article/article.model.ts"
+    },
+    {
+      "name": "Comment",
+      "fields": [
+        {
+          "name": "id",
+          "type": "number"
+        },
+        {
+          "name": "createdAt",
+          "type": "Date"
+        },
+        {
+          "name": "updatedAt",
+          "type": "Date"
+        },
+        {
+          "name": "body",
+          "type": "string"
+        },
+        {
+          "name": "article",
+          "type": "Article"
+        }
+      ],
+      "file": "app/routes/article/comment.model.ts"
+    },
+    {
+      "name": "RegisterInput",
+      "fields": [
+        {
+          "name": "email",
+          "type": "string"
+        },
+        {
+          "name": "username",
+          "type": "string"
+        },
+        {
+          "name": "password",
+          "type": "string"
+        },
+        {
+          "name": "image",
+          "type": "string"
+        },
+        {
+          "name": "bio",
+          "type": "string"
+        },
+        {
+          "name": "demo",
+          "type": "boolean"
+        }
+      ],
+      "file": "app/routes/auth/register-input.model.ts"
+    },
+    {
+      "name": "RegisteredUser",
+      "fields": [
+        {
+          "name": "id",
+          "type": "number"
+        },
+        {
+          "name": "email",
+          "type": "string"
+        },
+        {
+          "name": "username",
+          "type": "string"
+        },
+        {
+          "name": "bio",
+          "type": "unknown"
+        },
+        {
+          "name": "image",
+          "type": "unknown"
+        },
+        {
+          "name": "token",
+          "type": "string"
+        }
+      ],
+      "file": "app/routes/auth/registered-user.model.ts"
+    },
+    {
+      "name": "User",
+      "fields": [
+        {
+          "name": "id",
+          "type": "number"
+        },
+        {
+          "name": "username",
+          "type": "string"
+        },
+        {
+          "name": "email",
+          "type": "string"
+        },
+        {
+          "name": "password",
+          "type": "string"
+        },
+        {
+          "name": "bio",
+          "type": "unknown"
+        },
+        {
+          "name": "image",
+          "type": "unknown"
+        },
+        {
+          "name": "articles",
+          "type": "array"
+        },
+        {
+          "name": "favorites",
+          "type": "array"
+        },
+        {
+          "name": "followedBy",
+          "type": "array"
+        },
+        {
+          "name": "following",
+          "type": "array"
+        },
+        {
+          "name": "comments",
+          "type": "array"
+        },
+        {
+          "name": "demo",
+          "type": "boolean"
+        }
+      ],
+      "file": "app/routes/auth/user.model.ts"
+    },
+    {
+      "name": "Profile",
+      "fields": [
+        {
+          "name": "username",
+          "type": "string"
+        },
+        {
+          "name": "bio",
+          "type": "string"
+        },
+        {
+          "name": "image",
+          "type": "string"
+        },
+        {
+          "name": "following",
+          "type": "boolean"
+        }
+      ],
+      "file": "app/routes/profile/profile.model.ts"
+    },
+    {
+      "name": "Tag",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "file": "app/routes/tag/tag.model.ts"
+    },
+    {
+      "name": "CustomNodeJsGlobal",
+      "fields": [
+        {
+          "name": "prisma",
+          "type": "PrismaClient"
+        }
+      ],
+      "file": "prisma/prisma-client.ts"
+    }
+  ],
+  "warnings": [
+    "Static subset: direct Express route declarations and interface fields. Router mount prefixes, aliases, imported types, and runtime schemas are not resolved."
+  ]
+}

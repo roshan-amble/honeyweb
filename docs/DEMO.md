@@ -2,9 +2,9 @@
 
 ## Preparation
 
-Run `npm ci --ignore-scripts && npm run check && npm start`. Configure `MODEL_API_KEY` privately for actual Meta generation and exploration. The GitHub secret does not set a local key. Rehearse both fixture versions. Use only synthetic Acme source; keep keys, `.env` and actual customer code off screen.
+Run `npm ci --ignore-scripts && npm run check && npm start`. Configure `MODEL_API_KEY` privately for actual Meta generation and exploration. The GitHub secret does not set a local key. Rehearse both fixture versions. Use the synthetic Acme fixtures or the pinned public RealWorld source; keep keys, `.env` and actual customer code off screen.
 
-The longer evaluation command creates reproducible evidence: `npm run evaluate -- --meta --output=meta-evaluation.json`. A workflow artifact can prove a previous live run, but do not narrate it as a newly executed request.
+The longer evaluation command creates reproducible evidence: `npm run evaluate -- --meta --output=meta-evaluation.json`. A workflow artifact can prove a previous live run, but do not narrate it as a newly executed request. For the existing-application segment, show the committed [RealWorld case study](case-studies/realworld.md) and its live workflow. Keep the smaller fixture for the live three-minute UI sequence; the longer case runner is separate.
 
 ## Storyboard
 
@@ -15,7 +15,7 @@ The longer evaluation command creates reproducible evidence: `npm run evaluate -
 | 0:50–1:30 | Meta explorer and its observed HTTP trail | “This second model gets only an entry URL. It discovers links from actual responses and chooses what to inspect. It has no source or hidden graph. These requests are our labeled simulation.” |
 | 1:30–2:05 | Scan v2; highlight three failed schema checks and affected endpoints | “The application changed: customers became accounts, the order reference changed, and invoices gained a due date. Honeyweb shows exactly where the deployed data became stale.” |
 | 2:05–2:35 | Regenerate; show before/after checks and explore again | “A candidate must pass consistency checks before replacing the environment. References and exports stay aligned, and old credentials are invalidated.” |
-| 2:35–3:00 | Evaluation evidence and limits | “The fixture evaluation measures discovery depth, observed consistency, latency and tokens against a declared static baseline. This proves the integration and feedback loop, not production detection accuracy. Next is independent credibility testing and process isolation.” |
+| 2:35–3:00 | Evaluation evidence and limits | “We also tested a pinned existing Express/Prisma application with PostgreSQL, raw-HTTP discovery and a connected baseline. The case-study report preserves partial discovery and schema-change results. These are integration measurements; they do not prove attacker deception or a model advantage.” |
 
 Edit model waiting time only with a visible “generation time condensed” label. Preserve the observed runtime in the evidence panel. Never describe an offline fallback as Meta output. Keep the final hosted video accessible without a login.
 

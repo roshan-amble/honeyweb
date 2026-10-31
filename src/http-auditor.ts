@@ -19,7 +19,7 @@ export interface HttpView {
   observations: HttpObservation[];
   visitedRequests: { path: string; status: number }[];
   remainingRequests: number;
-  previousAuthorization: string;
+  observedAuthorizations: string[];
 }
 export interface HttpTrial {
   provider: "meta" | "offline";
@@ -74,8 +74,8 @@ export async function auditHTTP(options: {
   const started = Date.now(),
     observations: HttpObservation[] = [],
     actions: HttpTrial["actions"] = [];
-  let authorization = "",
-    stopReason = "budget",
+  const observedAuthorizations = new Set<string>();
+  let stopReason = "budget",
     model = "generic text-link rehearsal",
     modelCalls = 0,
     requests = 0,
@@ -96,7 +96,7 @@ export async function auditHTTP(options: {
           status: o.status,
         })),
         remainingRequests: budget - i,
-        previousAuthorization: authorization,
+        observedAuthorizations: [...observedAuthorizations],
       };
       if (options.decide) action = await options.decide(structuredClone(view));
       else if (options.provider === "meta") {
@@ -152,7 +152,8 @@ export async function auditHTTP(options: {
         break;
       }
     }
-    authorization = action.authorization;
+    const authorization = action.authorization;
+    if (authorization) observedAuthorizations.add(authorization);
     let response: Response;
     requests++;
     try {

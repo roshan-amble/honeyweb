@@ -47,6 +47,8 @@ export function validatePlan(input: unknown, snapshot: Snapshot): Plan {
   const nodes = new Map(plan.nodes.map(n => [n.id, n]));
   const entries = plan.nodes.filter(n => n.kind === "breadcrumb");
   const collections = plan.nodes.filter(n => n.kind === "collection");
+  const parameterNames = new Set(snapshot.routes.flatMap(route =>
+    [...route.path.matchAll(/:([A-Za-z][A-Za-z0-9_]*)/g)].map(match => match[1].toLowerCase())));
   if (nodes.size !== plan.nodes.length || new Set(plan.nodes.map(n => n.path)).size !== nodes.size)
     throw new Error("Node IDs and paths must be unique.");
   if (entries.length !== 1 || entries[0].entity !== "" || !collections.length || collections.length > 6)
@@ -55,6 +57,8 @@ export function validatePlan(input: unknown, snapshot: Snapshot): Plan {
     throw new Error("Each entity must have exactly one collection.");
   for (const node of plan.nodes) {
     if (node.path.includes("//") || node.path.endsWith("/")) throw new Error("Paths must be canonical local paths.");
+    if (node.path.split('/').some(segment => parameterNames.has(segment)))
+      throw new Error("Runtime routes are fixed URLs, not parameter templates. Use concrete collection and snapshot paths.");
     if (node.kind !== "breadcrumb" && !snapshot.entities.some(e => e.name === node.entity))
       throw new Error("Every data node must reference an observed entity.");
     if (node.kind === "export" && !collections.some(n => n.entity === node.entity))

@@ -4,7 +4,7 @@ This case uses the existing [RealWorld Express/Prisma reference backend](https:/
 
 ## What changed
 
-Before adaptation, Honeyweb saw 20 route declarations but only **1/20 exact mounted paths**: nineteen lacked their `/api` prefix. It found eight TypeScript DTO/helper interfaces and no relationships. The [recorded manifest](../../case-studies/realworld/manifest.json) preserves that measurement and a manually reviewed mounted-route inventory.
+Before adaptation, Honeyweb saw 20 route declarations but only **1/20 exact mounted paths**: nineteen lacked their `/api` prefix. It found eight TypeScript DTO/helper interfaces and no relationships. The [recorded manifest](../../case-studies/realworld/manifest.json) preserves that measurement and a manually reviewed mounted-route inventory. The [original scan output](realworld-before-scan.json) is retained.
 
 The scanner now follows relative default router imports and chained literal mounts. It reads Prisma scalar models and explicit single-field references to `id`. On this source it resolves **20/20 paths, four models (Article, Comment, Tag, User), and three references**: Article.authorId → User.id, Comment.articleId → Article.id, Comment.authorId → User.id. Nine inverse or implicit relation fields are explicitly omitted. When Prisma models exist, they replace TypeScript DTOs as the chosen entity inventory.
 
@@ -33,7 +33,7 @@ git -C /tmp/honeyweb-realworld checkout 30b68e1e881462b2f4164ea09ab4c4f5699c7b0b
 npm run case:realworld -- --upstream=/tmp/honeyweb-realworld --output=realworld-offline.json
 ```
 
-The script requires a clean pinned checkout and restores edited source files afterward. The offline rehearsal does not start the upstream API; its `/api` requests return 404 and its text-link follower is not model evidence. For the live mode, use the workflow or an expendable local `honeyweb_case` PostgreSQL database with `DATABASE_URL`, then add `--meta --start-upstream`. The live run changes that test database; discard it afterward.
+The script requires a clean pinned checkout and restores edited source files afterward. The offline rehearsal does not start the upstream API; its `/api` requests return 404 and its text-link follower is not model evidence. For the live mode, use the workflow or install the upstream lockfile with `npm --prefix /tmp/honeyweb-realworld ci --ignore-scripts`, provision an expendable local `honeyweb_case` PostgreSQL database, set `DATABASE_URL` and `MODEL_API_KEY`, then add `--meta --start-upstream`. The live run changes that test database; discard it afterward.
 
 ## Limits
 
@@ -43,4 +43,25 @@ The lab gateway is a controlled integration, not a deployable reverse proxy. Sep
 
 ## Results
 
-Local validation: 19 tests and the production build pass. The offline source-only rehearsal reaches all nine deterministic endpoints, all four exports and seven observed consistency checks. Live application/Meta results will be recorded here after the manual workflow completes.
+Local validation: 21 tests and the production build pass. The offline source-only rehearsal reaches all nine deterministic endpoints, all four exports and seven observed consistency checks. The dashboard also renders this custom source on desktop and mobile with no JavaScript errors or page overflow; all 11 schema/reference checks and seven observed offline checks pass.
+
+The live comparison used an eight-endpoint Meta plan (four collections, three exports) and an eight-endpoint connected baseline with matching inventory. All four trials used a fresh `muse-spark-1.3` HTTP evaluator with a 16-GET budget.
+
+| Condition | Trial | Decoy endpoints | Collections | Exports | Observed checks / failures | GETs | Successful GETs | Exploration time |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Connected baseline | 1 | 8/8 | 4 | 3 | 6 / 0 | 14 | 12 | 71.1s |
+| Meta-generated | 1 | 6/8 | 4 | 1 | 4 / 0 | 16 | 10 | 127.7s |
+| Meta-generated | 2 | 4/8 | 2 | 1 | 1 / 0 | 16 | 9 | 143.3s |
+| Connected baseline | 2 | 8/8 | 4 | 3 | 6 / 0 | 13 | 12 | 96.5s |
+
+This table follows the randomized execution order. Both generated-graph trials exhausted the budget; both baseline trials chose to stop. Successful GETs include homepage/docs and real application responses as well as decoys. Zero observed failures does not establish consistency of unvisited collections or exports. Latency includes model deliberation and HTTP time; it is not a measurement of attacker time lost.
+
+**The generated graph did not outperform the connected baseline on this discovery task.** Both conditions serve records from the same deterministic runtime. These results demonstrate an integration and reveal a discovery limitation; they do not establish that Meta improves deception. Two trials on one adapted reference app are too few for a general efficacy or statistical claim.
+
+The initial run completed successfully on [implementation commit 56a4acf](https://github.com/roshan-amble/honeyweb/commit/56a4acfc164c1d8a92c37a198f8ae85a65b38a60), with [workflow 41222957171](https://github.com/roshan-amble/honeyweb/actions/runs/41222957171) and [full initial evidence](realworld-evaluation-initial.json). The actual API returned the migrated `moderationStatus: "pending"` field. Stale decoys failed one Article schema check; regeneration restored all 11 checks. The subsequent HTTP trial reached only 3/8 endpoints and performed **zero** observed consistency checks, so it provided no response-only consistency evidence after regeneration.
+
+### Follow-up revision
+
+The original traces expose two concrete defects. The generator produced fixed paths containing `slug`, `id` and `username`, which resembled parameter templates; the evaluator substituted record values and received 404s. It also sometimes dropped Authorization after an unauthenticated request, then lost the original credential when the raw observation window advanced beyond eight responses. The baseline had occasional 401s too.
+
+The follow-up explicitly defines collections and exports as fixed GET URLs and batch snapshots, rejects path segments copied from source parameter names, and retains only credentials the evaluator has already submitted from observed responses. Credential memory does not automatically attach a header, parse a response convention, supply paths or bypass provenance checks. Both conditions use this same revised evaluator. Two regression tests cover these failures. We will run one fresh comparison and keep the original evidence; it is a development rerun after inspecting failures, not an independent replication.

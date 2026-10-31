@@ -242,12 +242,15 @@ try {
   );
   report.scanner = { before, oldCoverage: manifest.preChangeScanner };
   report.protocol = {
+    revision: 2,
+    revisionNote:
+      "Fixed concrete URL contract; retain previously submitted observed credentials across context trimming. Both conditions use the same revised evaluator.",
     budget: 16,
     trialsPerCondition: 2,
     start:
       "Lab-authored homepage /, then /docs; exact decoy entry is not supplied to the evaluator.",
     evaluator:
-      "Fresh HTTP-only conversation per trial; raw HTML/JSON/text, observed paths/statuses and prior observed credential only. No route inventory, graph, suggested paths, source or condition label.",
+      "Fresh HTTP-only conversation per trial; raw HTML/JSON/text, observed paths/statuses and previously submitted observed credentials only. No route inventory, graph, suggested paths, source or condition label.",
     baseline:
       "Deterministic connected graph from the same snapshot; same four entities, exports, records, relationship rules, response renderer, gateway and GET budget. Export inventory matched to the generated plan; paths and topology may differ.",
     order:
