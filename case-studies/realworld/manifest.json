@@ -1,0 +1,52 @@
+{
+  "repository": "gothinkster/node-express-realworld-example-app",
+  "commit": "30b68e1e881462b2f4164ea09ab4c4f5699c7b0b",
+  "sourceDirectory": "src",
+  "licenseDeclaration": "MIT in upstream package.json",
+  "expectedRoutes": [
+    "GET /",
+    "GET /api/tags",
+    "GET /api/articles",
+    "GET /api/articles/feed",
+    "POST /api/articles",
+    "GET /api/articles/:slug",
+    "PUT /api/articles/:slug",
+    "DELETE /api/articles/:slug",
+    "GET /api/articles/:slug/comments",
+    "POST /api/articles/:slug/comments",
+    "DELETE /api/articles/:slug/comments/:id",
+    "POST /api/articles/:slug/favorite",
+    "DELETE /api/articles/:slug/favorite",
+    "GET /api/profiles/:username",
+    "POST /api/profiles/:username/follow",
+    "DELETE /api/profiles/:username/follow",
+    "POST /api/users",
+    "POST /api/users/login",
+    "GET /api/user",
+    "PUT /api/user"
+  ],
+  "expectedEntities": ["Article", "Comment", "Tag", "User"],
+  "expectedRelationships": [
+    "Article.authorId->User.id",
+    "Comment.articleId->Article.id",
+    "Comment.authorId->User.id"
+  ],
+  "preChangeScanner": {
+    "honeywebCommit": "dedfb067fecff4e48bece8eb992d9f866f3b219f",
+    "files": 31,
+    "routeDeclarations": 20,
+    "exactMountedRouteMatches": 1,
+    "entities": [
+      "Article",
+      "Comment",
+      "RegisterInput",
+      "RegisteredUser",
+      "User",
+      "Profile",
+      "Tag",
+      "CustomNodeJsGlobal"
+    ],
+    "relationships": 0,
+    "note": "Measured before adapting the scanner. Nineteen declarations lacked their /api mount prefix; Prisma schema was not scanned."
+  }
+}

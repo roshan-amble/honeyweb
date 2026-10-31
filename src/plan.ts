@@ -33,6 +33,7 @@ export const planJsonSchema = z.toJSONSchema(planSchema);
 
 // Conservative convention-based references; these are evidence, not full type resolution.
 export function inferRelationships(snapshot: Snapshot): Relation[] {
+  if (snapshot.relationships) return snapshot.relationships;
   return snapshot.entities.flatMap(from => from.fields.flatMap(field => {
     const matches = snapshot.entities.filter(to => to.name !== from.name &&
       `${to.name}Id`.toLowerCase() === field.name.toLowerCase() &&
@@ -55,7 +56,7 @@ export function validatePlan(input: unknown, snapshot: Snapshot): Plan {
   for (const node of plan.nodes) {
     if (node.path.includes("//") || node.path.endsWith("/")) throw new Error("Paths must be canonical local paths.");
     if (node.kind !== "breadcrumb" && !snapshot.entities.some(e => e.name === node.entity))
-      throw new Error("Every data node must reference an observed interface.");
+      throw new Error("Every data node must reference an observed entity.");
     if (node.kind === "export" && !collections.some(n => n.entity === node.entity))
       throw new Error("Exports require a matching collection.");
   }
@@ -90,7 +91,7 @@ export function validatePlan(input: unknown, snapshot: Snapshot): Plan {
 }
 export function offlinePlan(snapshot: Snapshot): Generation {
   const entities = snapshot.entities.slice(0, 6);
-  if (!entities.length) throw new Error("A TypeScript interface is required to seed synthetic records.");
+  if (!entities.length) throw new Error("A TypeScript interface or Prisma model is required to seed synthetic records.");
   const slug = (name: string) => name.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
   const nodes: Plan["nodes"] = [{ id: "entry", kind: "breadcrumb", entity: "", path: "/internal/integration-config", label: "Integration workspace" }];
   const edges: Plan["edges"] = [];
@@ -107,7 +108,7 @@ export function offlinePlan(snapshot: Snapshot): Generation {
     if (to && !edges.some(e => e.from === from.id && e.to === to.id)) edges.push({ from: from.id, to: to.id });
   }
   return {
-    plan: validatePlan({ title: "Operations integration workspace", rationale: "Deterministic offline graph derived from observed interfaces and foreign-key naming conventions. No model was called.", nodes, edges, relationships }, snapshot),
+    plan: validatePlan({ title: "Operations integration workspace", rationale: "Deterministic offline graph derived from observed entities and supported references. No model was called.", nodes, edges, relationships }, snapshot),
     snapshotHash: snapshot.hash, provider: "offline", model: "deterministic", generatedAt: new Date().toISOString(),
   };
 }

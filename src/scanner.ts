@@ -1,4 +1,6 @@
 import ts from "typescript";
+import { extractPrisma, type SourceRelation } from "./prisma.ts";
+import { mountedRoutes } from "./routes.ts";
 import { readdir, readFile, lstat, realpath } from "node:fs/promises";
 import { relative, join, extname } from "node:path";
 import { createHash } from "node:crypto";
@@ -23,6 +25,8 @@ export interface Snapshot {
   routes: Route[];
   entities: Entity[];
   warnings: string[];
+  relationships?: SourceRelation[];
+  entitySource?: "interfaces" | "prisma";
 }
 const identifier = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
 const ignored = new Set([
@@ -50,7 +54,7 @@ function fieldType(node?: ts.TypeNode): string {
 
 export function extract(
   source: string,
-  file: string,
+  file: string
 ): { routes: Route[]; entities: Entity[] } {
   const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
   const factories = new Set<string>();
@@ -142,17 +146,20 @@ export async function scanRepository(directory: string): Promise<Snapshot> {
   const routes: Route[] = [];
   const entities: Entity[] = [];
   const warnings: string[] = [];
+  const sources = new Map<string, string>();
+  const prismaEntities: Entity[] = [];
+  const relationships: SourceRelation[] = [];
   async function walk(dir: string, depth = 0): Promise<void> {
     if (depth > 12)
       throw new Error(
-        "Repository exceeds 12 directory levels. Scan a smaller source directory.",
+        "Repository exceeds 12 directory levels. Scan a smaller source directory."
       );
     for (const entry of (await readdir(dir, { withFileTypes: true })).sort(
-      (a, b) => a.name.localeCompare(b.name),
+      (a, b) => a.name.localeCompare(b.name)
     )) {
       if (++entries > 5000)
         throw new Error(
-          "Repository exceeds 5,000 entries. Scan a smaller source directory.",
+          "Repository exceeds 5,000 entries. Scan a smaller source directory."
         );
       if (
         entry.name.startsWith(".") ||
@@ -167,7 +174,7 @@ export async function scanRepository(directory: string): Promise<Snapshot> {
       }
       if (
         !entry.isFile() ||
-        ![".ts", ".tsx"].includes(extname(path)) ||
+        ![".ts", ".tsx", ".prisma"].includes(extname(path)) ||
         path.endsWith(".d.ts")
       )
         continue;
@@ -178,35 +185,64 @@ export async function scanRepository(directory: string): Promise<Snapshot> {
       }
       if (++files > 256 || (bytes += stat.size) > 2_000_000)
         throw new Error(
-          "Repository exceeds scan limits (256 files / 2 MB). Scan a smaller source directory.",
+          "Repository exceeds scan limits (256 files / 2 MB). Scan a smaller source directory."
         );
-      const result = extract(
-        await readFile(path, "utf8"),
-        relative(root, path).split("\\").join("/"),
-      );
-      routes.push(...result.routes);
-      entities.push(...result.entities);
+      const file = relative(root, path).split("\\").join("/");
+      const source = await readFile(path, "utf8");
+      if (extname(path) === ".prisma") {
+        const result = extractPrisma(source, file);
+        prismaEntities.push(...result.entities);
+        relationships.push(...result.relationships);
+        warnings.push(...result.warnings);
+      } else {
+        sources.set(file, source);
+        entities.push(...extract(source, file).entities);
+      }
     }
   }
   await walk(root);
+  const mounted = mountedRoutes(sources);
+  routes.push(...mounted.routes);
+  warnings.push(...mounted.warnings);
+  const entitySource = prismaEntities.length ? "prisma" : "interfaces";
+  if (prismaEntities.length) {
+    entities.splice(0, entities.length, ...prismaEntities);
+    warnings.push(
+      "Prisma scalar models selected as domain entities; TypeScript DTO interfaces and object relation fields are omitted."
+    );
+  }
   if (routes.length > 200 || entities.length > 100)
     throw new Error(
-      "Too many routes or entities. Scan a smaller source directory.",
+      "Too many routes or entities. Scan a smaller source directory."
     );
   if (new Set(entities.map((e) => e.name)).size !== entities.length)
     throw new Error(
-      "Duplicate interface names are ambiguous. Scan a narrower source directory.",
+      "Duplicate interface names are ambiguous. Scan a narrower source directory."
     );
   if (!routes.length) warnings.push("No supported Express routes found.");
   if (!entities.length)
-    warnings.push("No supported TypeScript interfaces found.");
+    warnings.push("No supported TypeScript interfaces or Prisma models found.");
   warnings.push(
-    "Static subset: direct Express route declarations and interface fields. Router mount prefixes, aliases, imported types, and runtime schemas are not resolved.",
+    "Static subset: Express literal routes, chained mounts and relative default router imports; interface fields or Prisma scalar models and explicit id references. Dynamic mounts, named router exports, application behavior, composite keys and implicit many-to-many relations are not resolved."
   );
   const hash = createHash("sha256")
-    .update(JSON.stringify({ routes, entities }))
+    .update(
+      JSON.stringify({
+        routes,
+        entities,
+      ...(prismaEntities.length ? { relationships } : {}),
+      })
+    )
     .digest("hex");
-  return { hash, files, routes, entities, warnings };
+  return {
+    hash,
+    files,
+    routes,
+    entities,
+    warnings,
+    entitySource,
+    ...(prismaEntities.length ? { relationships } : {}),
+  };
 }
 
 export function drift(previous: Snapshot, current: Snapshot) {

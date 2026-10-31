@@ -17,9 +17,15 @@ This is an early local demonstration, not a hardened deployment or a security gu
 - No request bodies, authorization headers, query strings, IP addresses, or full unknown paths in telemetry. Displayed paths come from the validated plan. React renders labels as text.
 - Bounded memory for events and credentials. Deployment IDs separate historical activity from current metrics. Demo requests are labeled through an internal one-use marker.
 
+## Case-study lab
+
+The RealWorld case runner explicitly executes a reviewed pinned upstream application with disposable PostgreSQL and synthetic seed data. Scanning itself still never executes source. The application and decoys run in separate child processes with filtered environments. The decoy receives neither `MODEL_API_KEY` nor `DATABASE_URL`. This is process separation, not an OS sandbox or egress isolation. The lab gateway adds controlled homepage/docs/archive routing; archive credentials are never forwarded into the application.
+
+The case-study HTTP evaluator differs from the dashboard explorer: it sees raw response text and may guess paths on the single literal loopback origin. Only GET is available, redirects are rejected, and any Authorization credential must have appeared in a response. Disposable decoy credentials are visible to this model so it can interpret authentication without hard-coded response conventions; they are redacted in reports. Real application registration tokens are never given to the evaluator. Prisma extraction omits source literal/default values and does not resolve unsupported relationships.
+
 ## Not implemented
 
-OS/process sandboxing, a network egress firewall, TLS, operator authentication, multi-tenancy, rate limiting, persistent audit logs, reliable session identity, production secret scanning, robust parsing of arbitrary repositories, or protection against other malicious local processes. Operator and decoys share one process and memory. Do not expose these ports to the internet or route real customer traffic here.
+OS/process sandboxing, a network egress firewall, TLS, operator authentication, multi-tenancy, rate limiting, persistent audit logs, reliable session identity, production secret scanning, robust parsing of arbitrary repositories, or protection against other malicious local processes. The ordinary dashboard operator and decoys share one process and memory; only the case-study runner separates these processes. Do not expose these ports to the internet or route real customer traffic here.
 
 The source scanner assumes a stable trusted checkout. Symlink skipping is not protection against an attacker replacing files concurrently. Static metadata is a subset of a source tree, not a verified inventory of deployed services. False positives and deception fingerprinting are possible.
 

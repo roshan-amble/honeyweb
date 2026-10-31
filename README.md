@@ -60,7 +60,7 @@ npm run generate -- /absolute/path/to/source --offline
 npm run generate -- /absolute/path/to/source
 ```
 
-Scanner scope: direct Express route declarations and TypeScript interface fields. Foreign keys are inferred conservatively from `<Entity>Id` fields with a matching primitive `id` type. No mount-prefix resolution, imported-type resolution, runtime schemas, full application topology, or application execution. Use a stable checkout; hidden files, symlinks, dependency/build directories and declaration files are skipped. Up to six entity collections and thirteen nodes fit a plan. Larger or unsupported schemas may require a narrower snapshot; unresolved complex fields are `null`.
+Scanner scope: literal Express routes, chained mounts, relative default router imports, and TypeScript interface fields or Prisma scalar models. Prisma models take precedence over DTO interfaces when present. Explicit single-field Prisma references to `id` are extracted; interface references use conservative `<Entity>Id` conventions. Dynamic mounts, named router exports, imported types, implicit many-to-many relations, composite keys and application behavior are not resolved. Scanning never executes the application. Use a stable checkout; hidden files, symlinks, dependency/build directories and declaration files are skipped. Up to six entity collections and thirteen nodes fit a plan. Larger or unsupported schemas may require a narrower snapshot; unresolved complex fields are `null`.
 
 ## Verify and evaluate
 
@@ -79,6 +79,10 @@ The manual **Live Meta smoke test** workflow uses the existing encrypted `MODEL_
 
 Tests exercise the AST boundary, graph and relationship validation, mocked Meta contracts, real HTTP authentication and state, response-only exploration, redaction, request bounds, same-origin isolation, custom-source rescanning, and atomic regeneration.
 
+## Existing-application case study
+
+[RealWorld case study](docs/case-studies/realworld.md) adds a pinned external Express/Prisma source, an actual-app PostgreSQL lab, raw-HTTP discovery starting from a homepage, a matched connected baseline, repeated trials and controlled schema migration. The manual **RealWorld application case study** workflow runs it with the existing Meta secret. It uses a separate decoy process without model or database credentials. See the case study for its protocol, evidence and limits.
+
 ## Components and boundaries
 
 | Component | Responsibility |
@@ -90,8 +94,11 @@ Tests exercise the AST boundary, graph and relationship validation, mocked Meta 
 | `src/runtime.ts`, `src/server.ts` | Stateful decoys and local operator API |
 | `web/` | Graph, explorer evidence, telemetry and source-change dashboard |
 | `scripts/evaluate.ts` | Reproducible paired fixture evaluation and static comparison |
+| `src/routes.ts`, `src/prisma.ts` | Mounted-route and Prisma subset extraction |
+| `src/http-auditor.ts`, `src/lab.ts` | Raw-HTTP evaluator and isolated-process lab gateway |
+| `scripts/realworld.ts` | Existing-application case study and matched connected comparison |
 
-Operator and decoy listeners share a Node process; separate ports are **not** a sandbox. No production database/network integration, durable storage, internet exposure, container isolation, SIEM integration or efficacy claim. The event buffer holds 1,000 entries; at most 500 credentials live for 15 minutes or until redeploy. Credential correlation is not personal identity. Unknown traffic is labeled `unclassified`; demo traffic is explicitly marked.
+The ordinary dashboard operator and decoy listeners share a Node process; separate ports are **not** a sandbox. The case-study lab has an actual application and disposable database integration, but no production database/network integration, durable storage, internet exposure, container isolation, SIEM integration or efficacy claim. The event buffer holds 1,000 entries; at most 500 credentials live for 15 minutes or until redeploy. Credential correlation is not personal identity. Unknown traffic is labeled `unclassified`; demo traffic is explicitly marked.
 
 See [security boundaries](SECURITY.md), [demo storyboard](docs/DEMO.md), [submission draft](docs/SUBMISSION.md), and [deliverables](docs/HACKATHON.md). Original implementation began October 28, 2026 Pacific. MIT licensed.
 
