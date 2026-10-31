@@ -2,6 +2,8 @@
 
 This case uses the existing [RealWorld Express/Prisma reference backend](https://github.com/gothinkster/node-express-realworld-example-app/tree/30b68e1e881462b2f4164ea09ab4c4f5699c7b0b), pinned at `30b68e1e881462b2f4164ea09ab4c4f5699c7b0b`. Its package manifest declares MIT. Honeyweb fetches the checkout; it does not vendor the application.
 
+**Latest result:** the [follow-up live run](https://github.com/roshan-amble/honeyweb/actions/runs/41224250723) passed. Both Meta-generated and connected-baseline environments reached 9/9 endpoints in both trials, with seven observed checks and zero failures each. After an actual database schema change, regenerated decoys passed all 11 deployment checks and the evaluator reached 8/8 new endpoints. The initial discovery failures and subsequent fixes are retained below. This does not establish a Meta advantage.
+
 ## What changed
 
 Before adaptation, Honeyweb saw 20 route declarations but only **1/20 exact mounted paths**: nineteen lacked their `/api` prefix. It found eight TypeScript DTO/helper interfaces and no relationships. The [recorded manifest](../../case-studies/realworld/manifest.json) preserves that measurement and a manually reviewed mounted-route inventory. The [original scan output](realworld-before-scan.json) is retained.
@@ -19,7 +21,7 @@ This is an adapted case study, not held-out validation: we inspected the applica
 - Add `Article.moderationStatus String @default("pending")` in the disposable Prisma schema, update the article response mapper, push the change to the disposable database and regenerate its Prisma client. Confirm the actual API exposes the new field. Audit stale decoys, regenerate Honeyweb, audit again and run one fresh HTTP discovery trial.
 - Preserve full redacted observations, stop reasons, token usage and partial coverage. An execution pass means the integration assertions passed; it does not imply the evaluator found every endpoint or that Meta beat the baseline.
 
-The maximum is two Meta generations plus 75 HTTP decisions. Stop decisions also consume calls. Dollar cost is not estimated. No retrial is performed to select a better model result.
+Each run permits at most two Meta generations plus 75 HTTP decisions. Stop decisions also consume calls. Dollar cost is not estimated. No retrial is performed to select a better model result.
 
 ## Reproduce
 
@@ -41,7 +43,7 @@ The scanner does not reproduce upstream behavior, nested API serializers, nullab
 
 The lab gateway is a controlled integration, not a deployable reverse proxy. Separate processes and credential filtering do not provide an OS sandbox or network egress firewall. No production traffic, external participants, detection efficacy, persistent storage, automatic source watching, alert delivery or statistical superiority has been demonstrated.
 
-## Results
+## Initial results
 
 Local validation: 21 tests and the production build pass. The offline source-only rehearsal reaches all nine deterministic endpoints, all four exports and seven observed consistency checks. The dashboard also renders this custom source on desktop and mobile with no JavaScript errors or page overflow; all 11 schema/reference checks and seven observed offline checks pass.
 
@@ -60,8 +62,31 @@ This table follows the randomized execution order. Both generated-graph trials e
 
 The initial run completed successfully on [implementation commit 56a4acf](https://github.com/roshan-amble/honeyweb/commit/56a4acfc164c1d8a92c37a198f8ae85a65b38a60), with [workflow 41222957171](https://github.com/roshan-amble/honeyweb/actions/runs/41222957171) and [full initial evidence](realworld-evaluation-initial.json). The actual API returned the migrated `moderationStatus: "pending"` field. Stale decoys failed one Article schema check; regeneration restored all 11 checks. The subsequent HTTP trial reached only 3/8 endpoints and performed **zero** observed consistency checks, so it provided no response-only consistency evidence after regeneration.
 
+The initial run made 74 model calls (two generations and 72 HTTP decisions), reporting 88,930 input tokens and 142,679 output tokens. These are API-reported usage counts, not a dollar-cost estimate.
+
 ### Follow-up revision
 
 The original traces expose two concrete defects. The generator produced fixed paths containing `slug`, `id` and `username`, which resembled parameter templates; the evaluator substituted record values and received 404s. It also sometimes dropped Authorization after an unauthenticated request, then lost the original credential when the raw observation window advanced beyond eight responses. The baseline had occasional 401s too.
 
-The follow-up explicitly defines collections and exports as fixed GET URLs and batch snapshots, rejects path segments copied from source parameter names, and retains only credentials the evaluator has already submitted from observed responses. Credential memory does not automatically attach a header, parse a response convention, supply paths or bypass provenance checks. Both conditions use this same revised evaluator. Two regression tests cover these failures. We will run one fresh comparison and keep the original evidence; it is a development rerun after inspecting failures, not an independent replication.
+The follow-up explicitly defines collections and exports as fixed GET URLs and batch snapshots, rejects path segments copied from source parameter names, and retains only credentials the evaluator has already submitted from observed responses. Credential memory does not automatically attach a header, parse a response convention, supply paths or bypass provenance checks. Both conditions use this same revised evaluator. Two regression tests cover these failures. We ran one fresh comparison and kept the original evidence; it is a development rerun after inspecting failures, not an independent replication.
+
+## Follow-up results
+
+[Workflow 41224250723](https://github.com/roshan-amble/honeyweb/actions/runs/41224250723) ran on [implementation commit 9e4087b](https://github.com/roshan-amble/honeyweb/commit/9e4087bd8d3cfeb54a57f8e6ccc5c8ff192a3f99). [Full redacted evidence](realworld-evaluation.json) includes the generated plans, raw HTTP observations, action summaries, all checks and reported token usage. The revised plan contains nine endpoints with four exports; its matched baseline has the same inventory.
+
+| Condition | Trial | Decoy endpoints | Exports | Observed checks / failures | GETs | Successful GETs | Exploration time |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Meta-generated | 1 | 9/9 | 4 | 7 / 0 | 15 | 13 | 79.8s |
+| Connected baseline | 1 | 9/9 | 4 | 7 / 0 | 15 | 13 | 93.4s |
+| Connected baseline | 2 | 9/9 | 4 | 7 / 0 | 14 | 13 | 77.9s |
+| Meta-generated | 2 | 9/9 | 4 | 7 / 0 | 13 | 12 | 75.4s |
+
+All four evaluators stopped voluntarily within the 16-GET budget. Requests include ordinary application reads and occasional failed probes; complete endpoint coverage does not mean every request succeeded. The two conditions **tied on coverage and observed consistency**. Latency differences in two trials do not support an efficacy claim.
+
+The actual application returned `moderationStatus: "pending"` after the controlled migration. Old decoys failed the Article schema check; regenerated data passed **11/11** schema, ID and reference checks. The new graph had eight endpoints and three exports. A fresh HTTP trial reached **8/8 endpoints**, inspected all three exports and passed **6/6 observed consistency checks**, using 15 GETs (12 successful) in 113.4 seconds. No post-change baseline comparison was run.
+
+The follow-up made 74 model calls (two generations and 72 HTTP decisions), reporting **103,389 input tokens and 113,176 output tokens**. Model, graph and evaluator behavior changed between revisions, so this is a transparent development follow-up after inspecting failures, not an isolated causal experiment or held-out replication.
+
+The next validation target is semantic credibility: domain-appropriate values and behaviors, followed by an independent evaluation on another application. This case does not show that a generated topology is more convincing than a deterministic one.
+
+![Successful live RealWorld workflow](realworld-workflow-success.jpg)

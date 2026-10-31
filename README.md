@@ -6,6 +6,8 @@ Honeyweb scans an authorized TypeScript/Express snapshot, asks Meta to design a 
 
 Local prototype for the Meta Global AI Developer Hackathon. Public code; no hosted production service. The original live Meta generation passed [this workflow](https://github.com/roshan-amble/honeyweb/actions/runs/41118808357). The expanded v0.2 [live Meta evaluation passed](https://github.com/roshan-amble/honeyweb/actions/runs/41141387002): two real generations and twelve independent explorer decisions. [Full redacted evidence](docs/meta-evaluation.json) is committed.
 
+The [existing-application case study](docs/case-studies/realworld.md) now passes against a pinned RealWorld Express/Prisma backend with disposable PostgreSQL. After fixing two issues exposed by the initial run, both Meta-generated and connected-baseline graphs reached all nine endpoints in both trials. Schema-change regeneration and a fresh HTTP exploration also passed. Initial and follow-up evidence are both committed; these results do not establish a Meta advantage.
+
 ## Run
 
 Requires Node.js 24+.
@@ -34,7 +36,7 @@ Select **Meta model** under Plan generator and **Generate & deploy**. Select **M
 
 Meta's OpenAI-compatible `https://api.meta.ai/v1/chat/completions` API supplies structured JSON. Default model: `muse-spark-1.3`; override with `META_MODEL`. The generator sees extracted routes, interface or Prisma scalar fields, and supported references. It chooses entity coverage, endpoint names, graph links and rationale. The dashboard explorer sees only response observations and the remaining discovered links, with decoy credentials redacted; it chooses the next HTTP action. No model output becomes executable code. Errors never silently switch to offline mode.
 
-Only metadata, not source bodies, literals or comments, is sent for generation. Metadata may still be confidential. Explorer observations include synthetic response samples; its HTTP tool retains the disposable credential locally. Use only source you are authorized to scan and share with Meta.
+Only metadata, not source bodies, literals or comments, is sent for generation. Metadata may still be confidential. Dashboard explorer observations include synthetic response samples; its HTTP tool retains the disposable credential locally. The separate case-study evaluator reads raw response text and observed disposable credentials, which are redacted from saved evidence. Use only source you are authorized to scan and share with Meta.
 
 ## Demo flow
 

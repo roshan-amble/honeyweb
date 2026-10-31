@@ -7,9 +7,9 @@ Official [participant guide](https://cerebralvalley.ai/e/meta-ai-developer-hacka
 | Deliverable | Status |
 | --- | --- |
 | Public GitHub source | Available at `roshan-amble/honeyweb`; code, tests, docs and workflows |
-| Working product | Local branching environment, custom-source flow, independent explorer and checked regeneration implemented |
-| Meaningful Meta use | Two generations and twelve independent Meta decisions passed in [live run 41141387002](https://github.com/roshan-amble/honeyweb/actions/runs/41141387002); offline output is labeled |
-| Reproducible evaluation | Offline and live JSON evidence committed; live workflow artifact also available |
+| Working product | Local branching environment and custom-source dashboard; existing RealWorld app/PostgreSQL lab and checked schema-change regeneration implemented |
+| Meaningful Meta use | Live generation and HTTP discovery recorded in the [RealWorld case study](case-studies/realworld.md), alongside the earlier fixture evaluation; offline output is labeled |
+| Reproducible evaluation | Pinned upstream source, actual-app workflow, matched connected baseline, repeated trials, initial failures and follow-up evidence committed |
 | Three-minute demo | Updated storyboard in `DEMO.md`; recording and accessible link still required |
 | Project description and Meta rationale | Drafted in `SUBMISSION.md`; final review required |
 | Team, track, theme | Confirm team members and track; suggested theme is Push the Frontier |
