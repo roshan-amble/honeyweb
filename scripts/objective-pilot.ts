@@ -20,6 +20,7 @@ import {
   type ObjectiveTrial,
 } from "../src/objective-solver.ts";
 import { json } from "../src/runtime.ts";
+import { publicObjectiveEvidence } from "../src/objective-evidence.ts";
 
 const args = process.argv.slice(2),
   provider = args.includes("--meta") ? "meta" : "offline",
@@ -93,7 +94,8 @@ const safeError = (e: unknown) => {
 };
 let writes = Promise.resolve();
 const checkpoint = () => {
-  const contents = JSON.stringify(report, null, 2) + "\n";
+  const contents =
+    JSON.stringify(publicObjectiveEvidence(report), null, 2) + "\n";
   writes = writes.then(() => writeFile(output, contents, { mode: 0o600 }));
   return writes;
 };
@@ -278,9 +280,13 @@ try {
   }
   await writes.catch(() => {});
   report.completedAt = new Date().toISOString();
-  await writeFile(output, JSON.stringify(report, null, 2) + "\n", {
-    mode: 0o600,
-  });
+  await writeFile(
+    output,
+    JSON.stringify(publicObjectiveEvidence(report), null, 2) + "\n",
+    {
+      mode: 0o600,
+    }
+  );
   console.log(
     JSON.stringify({
       executionPassed: report.executionPassed,
