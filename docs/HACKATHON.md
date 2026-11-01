@@ -11,6 +11,7 @@ Official [participant guide](https://cerebralvalley.ai/e/meta-ai-developer-hacka
 | Meaningful Meta use | Live generation and HTTP discovery recorded in the [RealWorld case study](case-studies/realworld.md), alongside the earlier fixture evaluation; offline output is labeled |
 | Reproducible evaluation | Pinned upstream source, actual-app workflow, matched connected baseline, repeated trials, initial failures and follow-up evidence committed |
 | Objective-driven deception test | [21-session live pilot](case-studies/objective-pilot.md) completed with frozen protocol, capability and benign controls; zero confirmed deception for either graph, with raw negative evidence preserved |
+| Blind autonomous attack test | [29-session first run](case-studies/blind-pilot.md): one high-confidence catch in six Meta-condition attacks, all nine benign tasks completed without alerts; both secure controls had execution errors, so overall efficacy remains inconclusive |
 | Three-minute demo | Updated storyboard in `DEMO.md`; recording and accessible link still required |
 | Project description and Meta rationale | Drafted in `SUBMISSION.md`; final review required |
 | Team, track, theme | Confirm team members and track; suggested theme is Push the Frontier |

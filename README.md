@@ -10,6 +10,8 @@ The [existing-application case study](docs/case-studies/realworld.md) now passes
 
 A separate [objective-driven pilot](docs/case-studies/objective-pilot.md) completed 21 live sessions after a documented response-format correction. Neither graph produced a confirmed decoy submission (0/6 each). Meta produced early decoy contact in 1/6 tasks versus 2/6 for the deterministic graph; the no-decoy control passed 4/6, and all three public-read controls completed without decoy contact. The frozen protocol, initial failure, diagnostic and final traces are public. This is useful negative evidence, not a demonstrated Meta advantage.
 
+The [blind intrusion pilot](docs/case-studies/blind-pilot.md) adds 29 fresh goal-directed sessions with real GET/POST choices and server-verified outcomes. Meta-generated Honeyweb caught 1/6 attack sessions early, versus 0/6 for both ordinary monitoring and deterministic decoys; actual target reads were 5/6 versus 6/6. All nine benign tasks passed without alerts. Both secured-control sessions ended with execution errors, making the overall evaluation inconclusive. The report preserves every outcome and the exact credential-reuse/decoy-export trace; these are isolated, intentionally introduced lab flaws, not upstream vulnerabilities or production evidence.
+
 ## Run
 
 Requires Node.js 24+.
