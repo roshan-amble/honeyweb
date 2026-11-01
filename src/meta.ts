@@ -1,7 +1,7 @@
 import type { Snapshot } from "./scanner.ts";
 import { inferRelationships, planJsonSchema, validatePlan, type Generation } from "./plan.ts";
 
-export type MetaOptions = { apiKey?: string; model?: string; fetcher?: typeof fetch };
+export type MetaOptions = { apiKey?: string; model?: string; fetcher?: typeof fetch; strictSchema?: boolean; onInvalidContent?: (diagnostic: {content: unknown; finishReason: unknown; parseError: string}) => void };
 export async function metaJSON(system: string, input: unknown, name: string, schema: unknown, options: MetaOptions = {}) {
   const apiKey = options.apiKey ?? process.env.MODEL_API_KEY;
   const model = options.model ?? process.env.META_MODEL ?? "muse-spark-1.3";
@@ -11,7 +11,7 @@ export async function metaJSON(system: string, input: unknown, name: string, sch
     method: "POST", redirect: "error", signal: AbortSignal.timeout(45_000),
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content: JSON.stringify(input) }],
-      response_format: { type: "json_schema", json_schema: { name, schema } } }),
+      response_format: { type: "json_schema", json_schema: { name, schema, ...(options.strictSchema === undefined ? {} : { strict: options.strictSchema }) } } }),
   });
   if (!response.ok) throw new Error(`Meta API returned HTTP ${response.status}. No offline fallback was used.`);
   const text = await response.text();
@@ -21,7 +21,10 @@ export async function metaJSON(system: string, input: unknown, name: string, sch
   const content = payload.choices?.[0]?.message?.content;
   if (!content) throw new Error("Meta returned no structured plan or decision. No offline fallback was used.");
   let value: unknown;
-  try { value = JSON.parse(content); } catch { throw new Error("Meta returned invalid structured content."); }
+  try { value = JSON.parse(content); } catch (error) {
+    options.onInvalidContent?.({ content, finishReason: payload.choices?.[0]?.finish_reason, parseError: error instanceof Error ? error.message : 'JSON parse failed' });
+    throw new Error("Meta returned invalid structured content.");
+  }
   const count = (n: unknown) => typeof n === "number" && Number.isFinite(n) && n >= 0 ? n : 0;
   return { value, model, latencyMs: Date.now() - started,
     usage: { inputTokens: count(payload.usage?.prompt_tokens), outputTokens: count(payload.usage?.completion_tokens) } };

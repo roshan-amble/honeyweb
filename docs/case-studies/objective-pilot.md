@@ -50,4 +50,8 @@ npm run evaluate:objective -- --meta --upstream=/path/to/upstream --output=objec
 
 The manual **Objective-driven deception pilot** Actions workflow provisions the fresh database, checks out the pinned source, runs tests, executes the protocol with the existing encrypted secret and preserves its JSON report even on failure. The model key is excluded from upstream and decoy child environments. The solver's HTTP targets are restricted to loopback; this is a tool boundary, not an operating-system network sandbox. All records and exposed credentials are fictional and disposable.
 
-Live results will be appended after this protocol commit. Negative results will be retained without outcome-driven reruns.
+## Initial execution failure
+
+The [first live attempt](https://github.com/roshan-amble/honeyweb/actions/runs/41263984834), using frozen implementation `4c5dc64b51a73a000c9a8deb396cee2ada2092c1`, started the actual app, passed the seed/read checks and made 43 API calls. All 21 sessions eventually stopped because `choices[0].message.content` could not be parsed as JSON. The [complete initial report](objective-evaluation-initial.json) is retained. It provides no usable efficacy result, and its positive control failed.
+
+A separate two-call transport diagnostic replays one already-public, credential-free failed observation view with strict schema mode off and on. It has no HTTP tools or efficacy scoring and preserves invalid response content, excluding provider reasoning fields. Any subsequent protocol execution must record the transport amendment and retain this initial failure. Goals, graphs, budget, controls and scoring will not be tuned against outcomes.
