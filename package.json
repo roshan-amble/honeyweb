@@ -18,7 +18,8 @@
     "check": "npm run test && npm run build",
     "evaluate": "node --env-file-if-exists=.env --import tsx scripts/evaluate.ts",
     "case:realworld": "node --env-file-if-exists=.env --import tsx scripts/realworld.ts",
-    "evaluate:objective": "node --env-file-if-exists=.env --import tsx scripts/objective-pilot.ts"
+    "evaluate:objective": "node --env-file-if-exists=.env --import tsx scripts/objective-pilot.ts",
+    "evaluate:blind": "node --env-file-if-exists=.env --import tsx scripts/blind-pilot.ts"
   },
   "dependencies": {
     "react": "^19.2.0",
