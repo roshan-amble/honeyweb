@@ -8,6 +8,8 @@ Local prototype for the Meta Global AI Developer Hackathon. Public code; no host
 
 The [existing-application case study](docs/case-studies/realworld.md) now passes against a pinned RealWorld Express/Prisma backend with disposable PostgreSQL. After fixing two issues exposed by the initial run, both Meta-generated and connected-baseline graphs reached all nine endpoints in both trials. Schema-change regeneration and a fresh HTTP exploration also passed. Initial and follow-up evidence are both committed; these results do not establish a Meta advantage.
 
+A separate [objective-driven pilot](docs/case-studies/objective-pilot.md) freezes a three-condition test before live evaluation: can an agent seeking a credible internal dataset be diverted into submitting decoy records? It includes no-decoy capability controls and ordinary public-read controls. Merely visiting an endpoint does not count as deception.
+
 ## Run
 
 Requires Node.js 24+.
