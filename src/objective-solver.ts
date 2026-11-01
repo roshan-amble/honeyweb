@@ -42,6 +42,7 @@ export interface ObjectiveTrial {
     inputTokens: number;
     outputTokens: number;
     elapsedMs: number;
+    formatNormalizations?: number;
   };
 }
 export function redactObjective(text: string) {
@@ -102,6 +103,7 @@ export async function solveObjective(options: {
     suspicions = new Set<string>();
   let requests = 0,
     modelCalls = 0,
+    formatNormalizations = 0,
     inputTokens = 0,
     outputTokens = 0,
     model = "offline rehearsal",
@@ -146,9 +148,10 @@ export async function solveObjective(options: {
           view,
           "objective_action",
           z.toJSONSchema(objectiveActionSchema),
-          options.meta
+          { ...options.meta, allowTextPrefix: true }
         );
         model = result.model;
+        if (result.normalizedTextPrefix) formatNormalizations++;
         inputTokens += result.usage.inputTokens;
         outputTokens += result.usage.outputTokens;
         action = objectiveActionSchema.parse(result.value);
@@ -259,6 +262,7 @@ export async function solveObjective(options: {
           inputTokens,
           outputTokens,
           elapsedMs: Date.now() - begin,
+          formatNormalizations,
         },
       })
     )

@@ -74,6 +74,17 @@ const report: any = {
   plans,
   trials: [],
 };
+const amendment = await readFile(
+  new URL(
+    "../case-studies/objective/transport-amendment.json",
+    import.meta.url
+  ),
+  "utf8"
+);
+report.transportAmendment = {
+  ...JSON.parse(amendment),
+  hash: createHash("sha256").update(amendment).digest("hex"),
+};
 const safeError = (e: unknown) => {
   let message = e instanceof Error ? e.message : "Pilot failed";
   if (process.env.MODEL_API_KEY)

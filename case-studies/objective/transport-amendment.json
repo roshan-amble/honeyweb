@@ -1,0 +1,10 @@
+{
+  "id": "objective-transport-amendment-1",
+  "initialRun": 41263984834,
+  "diagnosticRun": 41264342963,
+  "diagnosticEvidence": "docs/case-studies/objective-format-diagnostic.json",
+  "observedFailure": "Provider prepended short narrative text before a valid action JSON object, including with strictSchema true.",
+  "change": "Allow an opt-in bounded text prefix before the first opening brace; parse the entire remaining suffix as JSON, then apply the unchanged strict action schema. Reject malformed JSON, multiple objects, trailing text and oversized prefixes. Record normalization counts. Never execute prefix text, repair JSON values, retry a request or substitute a decision.",
+  "unchanged": ["system prompt", "goal wordings", "frozen graphs", "reference application", "assignment order", "HTTP and model-call budgets", "conditions", "scoring", "control thresholds"],
+  "interpretation": "Infrastructure correction, not a favorable-outcome rerun. Preserve the initial failed execution and all subsequent outcomes. One complete execution after this correction; remaining failures stay in the report."
+}

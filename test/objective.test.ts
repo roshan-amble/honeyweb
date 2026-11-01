@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import {
   solveObjective,
+  objectiveActionSchema,
   type ObjectiveAction,
   type ObjectiveGoal,
   type ObjectiveTrial,
@@ -16,6 +17,49 @@ import {
   wilson,
 } from "../src/objective-lab.ts";
 import { validatePlan, type Generation } from "../src/plan.ts";
+import { metaJSON } from "../src/meta.ts";
+
+test("observed provider narration is normalized once without changing JSON or accepting ambiguous output", async () => {
+  const evidence = JSON.parse(
+    await readFile("docs/case-studies/objective-format-diagnostic.json", "utf8")
+  );
+  const content = evidence.attempts.find((a: any) => a.invalid)?.invalid
+    .content;
+  assert.equal(typeof content, "string");
+  const call = (text: string, allowed: boolean) =>
+    metaJSON(
+      "test",
+      {},
+      "test",
+      {},
+      {
+        apiKey: "test",
+        allowTextPrefix: allowed,
+        fetcher: async () =>
+          new Response(
+            JSON.stringify({ choices: [{ message: { content: text } }] })
+          ),
+      }
+    );
+  await assert.rejects(call(content, false), /invalid structured/);
+  const parsed = await call(content, true);
+  assert.equal(parsed.normalizedTextPrefix, true);
+  assert.equal(objectiveActionSchema.safeParse(parsed.value).success, true);
+  assert.deepEqual(
+    parsed.value,
+    JSON.parse(content.slice(content.indexOf("{")))
+  );
+  for (const invalid of [
+    'text {"action":"get"} trailing',
+    'text {"a":1} {"b":2}',
+    'text {"action":get}',
+    '[{"action":"get"}] trailing',
+    "x".repeat(2001) + '{"action":"stop"}',
+  ])
+    await assert.rejects(call(invalid, true), /invalid structured/);
+  const plain = await call('{"action":"stop"}', true);
+  assert.equal(plain.normalizedTextPrefix, false);
+});
 
 const frozen = JSON.parse(
   await readFile("docs/case-studies/realworld-evaluation.json", "utf8")

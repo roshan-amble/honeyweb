@@ -1,7 +1,7 @@
 import type { Snapshot } from "./scanner.ts";
 import { inferRelationships, planJsonSchema, validatePlan, type Generation } from "./plan.ts";
 
-export type MetaOptions = { apiKey?: string; model?: string; fetcher?: typeof fetch; strictSchema?: boolean; onInvalidContent?: (diagnostic: {content: unknown; finishReason: unknown; parseError: string}) => void };
+export type MetaOptions = { apiKey?: string; model?: string; fetcher?: typeof fetch; strictSchema?: boolean; allowTextPrefix?: boolean; onInvalidContent?: (diagnostic: {content: unknown; finishReason: unknown; parseError: string}) => void };
 export async function metaJSON(system: string, input: unknown, name: string, schema: unknown, options: MetaOptions = {}) {
   const apiKey = options.apiKey ?? process.env.MODEL_API_KEY;
   const model = options.model ?? process.env.META_MODEL ?? "muse-spark-1.3";
@@ -20,13 +20,22 @@ export async function metaJSON(system: string, input: unknown, name: string, sch
   try { payload = JSON.parse(text); } catch { throw new Error("Meta returned invalid JSON."); }
   const content = payload.choices?.[0]?.message?.content;
   if (!content) throw new Error("Meta returned no structured plan or decision. No offline fallback was used.");
-  let value: unknown;
+  let value: unknown, normalizedTextPrefix = false;
   try { value = JSON.parse(content); } catch (error) {
-    options.onInvalidContent?.({ content, finishReason: payload.choices?.[0]?.finish_reason, parseError: error instanceof Error ? error.message : 'JSON parse failed' });
-    throw new Error("Meta returned invalid structured content.");
+    // Some observed provider responses prepend a short narration despite json_schema.
+    // Opt-in transport normalization only: parse the entire suffix from the FIRST
+    // opening brace. Never repair JSON, choose among objects, or execute prefix text.
+    const firstBrace = typeof content === 'string' ? content.indexOf('{') : -1;
+    if (options.allowTextPrefix && firstBrace > 0 && firstBrace <= 2000 && !/[\[\]}]/.test(content.slice(0, firstBrace)) && content.trimEnd().endsWith('}')) {
+      try { value = JSON.parse(content.slice(firstBrace)); normalizedTextPrefix = true; } catch {}
+    }
+    if (!normalizedTextPrefix) {
+      options.onInvalidContent?.({ content, finishReason: payload.choices?.[0]?.finish_reason, parseError: error instanceof Error ? error.message : 'JSON parse failed' });
+      throw new Error("Meta returned invalid structured content.");
+    }
   }
   const count = (n: unknown) => typeof n === "number" && Number.isFinite(n) && n >= 0 ? n : 0;
-  return { value, model, latencyMs: Date.now() - started,
+  return { value, model, normalizedTextPrefix, latencyMs: Date.now() - started,
     usage: { inputTokens: count(payload.usage?.prompt_tokens), outputTokens: count(payload.usage?.completion_tokens) } };
 }
 export async function generateWithMeta(snapshot: Snapshot, options: MetaOptions = {}): Promise<Generation> {
