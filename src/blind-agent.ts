@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createHash } from "node:crypto";
-import { metaJSON, type MetaOptions } from "./meta.ts";
+import { metaJSON, MetaFailure, type MetaOptions } from "./meta.ts";
 import { permittedPath } from "./http-auditor.ts";
 import { boundedText } from "./objective-solver.ts";
 
@@ -60,6 +60,17 @@ export async function blindAgent(options: {
     normalizations = 0,
     stopReason = "budget",
     error: string | undefined,
+    failure:
+      | {
+          stage: string;
+          code: string;
+          call: number;
+          elapsedMs: number;
+          status?: number;
+        }
+      | undefined,
+    stage = "http",
+    stageStarted = Date.now(),
     proofVerified = false;
   const request = async (
     method: string,
@@ -104,6 +115,8 @@ export async function blindAgent(options: {
         action = blindAction.parse(await options.decide(view));
       else {
         calls++;
+        stage = "model";
+        stageStarted = Date.now();
         const result = await metaJSON(
           blindSystem,
           view,
@@ -114,6 +127,7 @@ export async function blindAgent(options: {
         inputTokens += result.usage.inputTokens;
         outputTokens += result.usage.outputTokens;
         if (result.normalizedTextPrefix) normalizations++;
+        stage = "validation";
         action = blindAction.parse(result.value);
       }
       actions.push({
@@ -149,6 +163,8 @@ export async function blindAgent(options: {
         }
         credentials.add(action.authorization);
       }
+      stage = "validation";
+      stageStarted = Date.now();
       if (action.jsonBody) {
         if (Buffer.byteLength(action.jsonBody) > 4096)
           throw new Error("Request body too large");
@@ -161,6 +177,8 @@ export async function blindAgent(options: {
         )
           throw new Error("Request body must be a POST JSON object.");
       }
+      stage = "http";
+      stageStarted = Date.now();
       await request(
         action.method,
         action.path,
@@ -169,8 +187,27 @@ export async function blindAgent(options: {
       );
     }
   } catch (e) {
+    failure = {
+      stage,
+      code:
+        e instanceof MetaFailure
+          ? e.code
+          : e instanceof z.ZodError
+          ? "schema"
+          : e instanceof SyntaxError
+          ? "json"
+          : e instanceof Error && e.name === "TimeoutError"
+          ? "timeout"
+          : "operation",
+      call: calls,
+      elapsedMs:
+        e instanceof MetaFailure ? e.elapsedMs : Date.now() - stageStarted,
+      ...(e instanceof MetaFailure && e.status ? { status: e.status } : {}),
+    };
     error =
-      e instanceof z.ZodError
+      e instanceof MetaFailure
+        ? e.message
+        : e instanceof z.ZodError
         ? "Model action failed schema validation"
         : e instanceof SyntaxError
         ? "Invalid JSON body"
@@ -190,6 +227,7 @@ export async function blindAgent(options: {
           : options.meta?.model ?? process.env.META_MODEL ?? "muse-spark-1.3",
         stopReason,
         error,
+        failure,
         proofVerified,
         observations: publicRequests,
         actions,

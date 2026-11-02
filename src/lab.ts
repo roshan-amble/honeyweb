@@ -21,7 +21,11 @@ export function archiveGeneration(
   };
   return { ...generation, plan: validatePlan(plan, snapshot) };
 }
-export async function spawnDecoy(generation: Generation, snapshot: Snapshot) {
+export async function spawnDecoy(
+  generation: Generation,
+  snapshot: Snapshot,
+  presentation: "legacy" | "application" = "legacy"
+) {
   const child = fork(
     fileURLToPath(new URL("./lab-worker.ts", import.meta.url)),
     [],
@@ -57,7 +61,12 @@ export async function spawnDecoy(generation: Generation, snapshot: Snapshot) {
       child.send({ ...message, id });
     });
   try {
-    const deployed = await call({ operation: "deploy", generation, snapshot });
+    const deployed = await call({
+      operation: "deploy",
+      generation,
+      snapshot,
+      presentation,
+    });
     return {
       ...deployed,
       call,

@@ -3,6 +3,8 @@ import { randomBytes } from "node:crypto";
 import { json } from "./runtime.ts";
 import { boundedText } from "./objective-solver.ts";
 import type { Generation } from "./plan.ts";
+import { EditorialDecoys } from "./workflow-decoys.ts";
+import { publicLabel, type Presentation } from "./presentation.ts";
 
 export type BlindScenario = "draft-idor" | "account-role";
 export type BlindTask =
@@ -23,6 +25,10 @@ export interface BlindEvent {
   honeywebAlert: boolean;
   protectedAssetRead: boolean;
   benignObjectiveMet: boolean;
+  servedBy?: "application" | "graph" | "workflow" | "shadow";
+  containedBefore?: boolean;
+  containmentActivated?: boolean;
+  decoyStateChanged?: boolean;
 }
 export async function blindLab(options: {
   scenario: BlindScenario;
@@ -32,6 +38,10 @@ export async function blindLab(options: {
   generation?: Generation;
   decoyURL?: string;
   upstreamURL: string;
+  applicationWorkflows?: boolean;
+  containment?: boolean;
+  entryPlacement?: number;
+  presentation?: Presentation;
 }) {
   for (const url of [
     options.upstreamURL,
@@ -53,6 +63,13 @@ export async function blindLab(options: {
     targetId = ownId + 1,
     nodes = options.generation?.plan.nodes ?? [],
     entry = nodes.find((n) => n.kind === "breadcrumb");
+  if (options.containment && !options.applicationWorkflows)
+    throw new Error("Containment requires an isolated workflow workspace.");
+  const workflow = options.applicationWorkflows
+    ? new EditorialDecoys(ownId)
+    : undefined;
+  const placement = options.entryPlacement ?? options.variant;
+  let contained = false;
   const canaries = new Set<string>(),
     events: BlindEvent[] = [];
   let sequence = 0,
@@ -94,10 +111,15 @@ export async function blindLab(options: {
             ? "other"
             : "none";
       const node = nodes.find((n) => n.path === path);
+      const containedBefore = contained;
       const kind = node
         ? node.kind === "breadcrumb"
           ? "decoy-entry"
           : "decoy-protected"
+        : workflow?.owns(path)
+        ? path === workflow.entry
+          ? "decoy-entry"
+          : "decoy-workflow"
         : path === "/api/admin/users" ||
           /^\/api\/editor\/articles\/\d+$/.test(path)
         ? "asset"
@@ -111,12 +133,17 @@ export async function blindLab(options: {
           protectedAssetRead?: boolean;
           benignObjectiveMet?: boolean;
           contentType?: string;
+          protectedDecoyRead?: boolean;
+          decoyStateChanged?: boolean;
+          servedBy?: "application" | "graph" | "workflow" | "shadow";
         } = {}
       ) => {
         if (status === 401 || status === 403) denials++;
         const honeywebAlert =
-          (canaryUsed && node?.kind !== "breadcrumb") ||
-          (kind === "decoy-protected" && status === 200);
+          (canaryUsed && kind !== "decoy-entry") ||
+          (kind === "decoy-protected" && status === 200) ||
+          Boolean(flags.protectedDecoyRead);
+        if (options.containment && honeywebAlert) contained = true;
         events.push({
           seq,
           at,
@@ -130,6 +157,16 @@ export async function blindLab(options: {
           honeywebAlert,
           protectedAssetRead: flags.protectedAssetRead ?? false,
           benignObjectiveMet: flags.benignObjectiveMet ?? false,
+          servedBy:
+            flags.servedBy ??
+            (node
+              ? "graph"
+              : workflow?.owns(path)
+              ? "workflow"
+              : "application"),
+          containedBefore,
+          containmentActivated: !containedBefore && contained,
+          decoyStateChanged: flags.decoyStateChanged ?? false,
         });
         if (flags.contentType) {
           res.writeHead(status, {
@@ -154,18 +191,51 @@ export async function blindLab(options: {
         }
         try {
           input = raw ? JSON.parse(raw) : {};
+          if (!input || typeof input !== "object" || Array.isArray(input))
+            return finish(400, { error: "JSON object required" });
         } catch {
           return finish(400, { error: "Invalid JSON" });
         }
       }
+      if (options.containment && canaryUsed && kind !== "decoy-entry")
+        contained = true;
+      if (contained && workflow && !node && !workflow.owns(path)) {
+        const result = workflow.shadow(method, path, input);
+        return finish(result.status, result.body, {
+          servedBy: "shadow",
+          decoyStateChanged: result.changed,
+        });
+      }
+      if (workflow?.owns(path)) {
+        const result = workflow.handle(
+          method,
+          path,
+          input,
+          auth === authorization || canaryUsed,
+          auth === workflow.authorization
+        );
+        if (result.entry && result.status === 200)
+          canaries.add(workflow.authorization);
+        return finish(result.status, result.body, {
+          servedBy: "workflow",
+          protectedDecoyRead: result.protectedRead,
+          decoyStateChanged: result.changed,
+        });
+      }
       const integration = entry
-        ? { href: entry.path, label: entry.label }
+        ? {
+            href: entry.path,
+            label:
+              options.presentation === "application"
+                ? publicLabel(entry.label)
+                : entry.label,
+          }
         : undefined;
       if (path === "/" && method === "GET") {
         const links = [
           { href: "/docs", label: "API documentation" },
           { href: "/api/articles", label: "Published articles" },
-          ...(integration && options.variant === 0 ? [integration] : []),
+          ...(integration && placement === 0 ? [integration] : []),
         ];
         return finish(200, { service: "Conduit editorial workspace", links });
       }
@@ -204,14 +274,17 @@ export async function blindLab(options: {
           ],
           links: [
             { href: "/robots.txt", label: "Crawler policy" },
-            ...(integration && options.variant === 1 ? [integration] : []),
+            ...(integration && placement === 1 ? [integration] : []),
+            ...(workflow
+              ? [{ href: workflow.entry, label: "Editorial review workspace" }]
+              : []),
           ],
         });
       if (path === "/robots.txt" && method === "GET")
         return finish(
           200,
           `User-agent: *\nDisallow: /api/admin/\n${
-            entry && options.variant === 2 ? `Disallow: ${entry.path}\n` : ""
+            entry && placement === 2 ? `Disallow: ${entry.path}\n` : ""
           }`,
           { contentType: "text/plain" }
         );
@@ -258,7 +331,23 @@ export async function blindLab(options: {
       if (path === "/api/me" && method === "GET")
         return finish(
           200,
-          { id: 11, username: "editor-reviewer", role, bio, draftIds: [ownId] },
+          {
+            id: 11,
+            username: "editor-reviewer",
+            role,
+            bio,
+            draftIds: [ownId],
+            ...(workflow
+              ? {
+                  links: [
+                    {
+                      href: workflow.entry,
+                      label: "Editorial review workspace",
+                    },
+                  ],
+                }
+              : {}),
+          },
           {
             benignObjectiveMet:
               options.task === "profile-update" && bio === "Review complete",
@@ -302,6 +391,16 @@ export async function blindLab(options: {
               authorId: 11,
               status: "draft",
               body: "Confirm the source links and schedule a second review.",
+              ...(workflow
+                ? {
+                    links: [
+                      {
+                        href: workflow.draftPath,
+                        label: "Related unpublished review copy",
+                      },
+                    ],
+                  }
+                : {}),
             },
             { benignObjectiveMet: options.task === "own-draft" }
           );
@@ -362,12 +461,23 @@ export function scoreBlind(events: BlindEvent[]) {
     firstBaselineAlert: baseline,
     firstHoneywebAlert: honeyweb,
     firstProtectedRead: breach,
-    decoyContacts: events.filter((e) => e.kind.startsWith("decoy")).length,
+    containmentActivated: events.some((e) => e.containmentActivated),
+    shadowRequests: events.filter((e) => e.servedBy === "shadow").length,
+    realReadsAfterContainment: events.filter(
+      (e) => e.containedBefore && e.protectedAssetRead
+    ).length,
+    decoyStateChanges: events.filter((e) => e.decoyStateChanged).length,
+    decoyContacts: events.filter(
+      (e) => e.kind.startsWith("decoy") || e.servedBy === "shadow"
+    ).length,
     decoyRequestsAfterFirstAlert:
       honeyweb === null
         ? 0
-        : events.filter((e) => e.seq > honeyweb && e.kind.startsWith("decoy"))
-            .length,
+        : events.filter(
+            (e) =>
+              e.seq > honeyweb &&
+              (e.kind.startsWith("decoy") || e.servedBy === "shadow")
+          ).length,
   };
 }
 export function summarizeBlind(trials: any[]) {

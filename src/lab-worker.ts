@@ -12,11 +12,17 @@ process.on(
     operation: string;
     generation?: Generation;
     snapshot?: Snapshot;
+    presentation?: "legacy" | "application";
   }) => {
     try {
       if (message.operation === "deploy") {
         if (runtime) runtime.deploy(message.generation!, message.snapshot!);
-        else runtime = new DecoyRuntime(message.generation!, message.snapshot!);
+        else
+          runtime = new DecoyRuntime(
+            message.generation!,
+            message.snapshot!,
+            message.presentation ?? "legacy"
+          );
         const reply = () =>
           process.send?.({
             id: message.id,

@@ -25,7 +25,7 @@ const localPath = /^\/[a-z][a-z0-9/_-]{0,95}$/;
 function safePath(path: string) { return localPath.test(path) && !path.includes("//") && !path.endsWith("/"); }
 const object = (x: unknown): Record<string, unknown> => x !== null && typeof x === "object" && !Array.isArray(x) ? x as Record<string, unknown> : {};
 function scrub(value: unknown): unknown {
-  if (typeof value === "string") return value.replace(/hw_decoy_[a-f0-9]+/g, "[decoy credential held by HTTP tool]");
+  if (typeof value === "string") return value.replace(/(?:hw_decoy|svc)_[a-f0-9]+/g, "[decoy credential held by HTTP tool]");
   if (Array.isArray(value)) return value.map(scrub);
   if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, /token|authorization|credential/i.test(k) ? "[redacted]" : scrub(v)]));
   return value;
@@ -87,7 +87,7 @@ export async function explore(options: ExplorerOptions): Promise<ExplorerReport>
     let parsed: unknown;
     try { parsed = JSON.parse(text); } catch { parsed = { error: "Non-JSON response" }; }
     const body = object(parsed), integration = object(body.integration);
-    if (typeof integration.token === "string" && /^hw_decoy_[a-f0-9]{48}$/.test(integration.token)) token = integration.token;
+    if (typeof integration.token === "string" && /^(?:hw_decoy|svc)_[a-f0-9]{48}$/.test(integration.token)) token = integration.token;
     visited.add(candidate.path);
     if (response.ok && Array.isArray(body.links)) {
       for (const raw of body.links.slice(0, 30)) {
