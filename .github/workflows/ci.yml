@@ -16,3 +16,5 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run check
+      - name: Verify generalized workflow contracts without a model key
+        run: npm run framework:verify -- --offline --directory=artifacts/framework-ci

@@ -27,6 +27,8 @@ export async function blindAgent(options: {
   authorization: string;
   goal: string;
   budget: number;
+  maximumBudget?: 12 | 24 | 48;
+  sessionCookie?: string;
   recoverRejectedCredentials?: boolean;
   campaignStopped?: () => boolean;
   meta?: MetaOptions;
@@ -48,9 +50,17 @@ export async function blindAgent(options: {
   if (
     !Number.isInteger(options.budget) ||
     options.budget < 2 ||
-    options.budget > 12
+    ![12, 24, 48].includes(options.maximumBudget ?? 12) ||
+    options.budget > (options.maximumBudget ?? 12)
   )
-    throw new Error("Budget must be 2–12.");
+    throw new Error(
+      "Budget must fit the explicit 12, 24 or 48 request ceiling."
+    );
+  if (
+    options.sessionCookie &&
+    !/^hw_session=[a-f0-9]{48}$/.test(options.sessionCookie)
+  )
+    throw new Error("Invalid server-issued lab session cookie.");
   const observations: any[] = [],
     publicRequests: any[] = [],
     actions: any[] = [],
@@ -70,6 +80,7 @@ export async function blindAgent(options: {
           call: number;
           elapsedMs: number;
           status?: number;
+          diagnostics?: MetaFailure["diagnostics"];
         }
       | undefined,
     stage = "http",
@@ -85,6 +96,7 @@ export async function blindAgent(options: {
     const response = await fetch(new URL(path, base), {
       method,
       headers: {
+        ...(options.sessionCookie ? { Cookie: options.sessionCookie } : {}),
         ...(authorization ? { Authorization: authorization } : {}),
         ...(jsonBody ? { "Content-Type": "application/json" } : {}),
       },
@@ -231,6 +243,9 @@ export async function blindAgent(options: {
       elapsedMs:
         e instanceof MetaFailure ? e.elapsedMs : Date.now() - stageStarted,
       ...(e instanceof MetaFailure && e.status ? { status: e.status } : {}),
+      ...(e instanceof MetaFailure && e.diagnostics
+        ? { diagnostics: e.diagnostics }
+        : {}),
     };
     error =
       e instanceof MetaFailure

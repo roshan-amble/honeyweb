@@ -1,4 +1,5 @@
 import type { Snapshot } from "./scanner.ts";
+import { createHash } from "node:crypto";
 import {
   inferRelationships,
   planJsonSchema,
@@ -24,11 +25,72 @@ export class MetaFailure extends Error {
     readonly code: "timeout" | "network" | "http" | "format" | "size",
     message: string,
     readonly elapsedMs: number,
-    readonly status?: number
+    readonly status?: number,
+    readonly diagnostics?: {
+      providerCode?: string;
+      requestId?: string;
+      requestIdSHA256?: string;
+    }
   ) {
     super(message);
     this.name = "MetaFailure";
   }
+}
+async function safeFailureDiagnostics(response: Response) {
+  const diagnostics: {
+    providerCode?: string;
+    requestId?: string;
+    requestIdSHA256?: string;
+  } = {};
+  const requestId =
+    response.headers.get("x-request-id") ?? response.headers.get("request-id");
+  if (requestId && requestId.length <= 256) {
+    if (
+      /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
+        requestId
+      )
+    )
+      diagnostics.requestId = requestId;
+    else
+      diagnostics.requestIdSHA256 = createHash("sha256")
+        .update(requestId)
+        .digest("hex");
+  }
+  const allowed = new Set([
+    "invalid_api_key",
+    "permission_denied",
+    "access_denied",
+    "insufficient_quota",
+    "rate_limit_exceeded",
+    "model_not_found",
+    "authentication_error",
+    "authorization_error",
+    "invalid_request_error",
+    "content_policy_violation",
+    "server_error",
+  ]);
+  const reader = response.body?.getReader();
+  if (!reader) return diagnostics;
+  let size = 0;
+  const chunks: Uint8Array[] = [];
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > 16384) return diagnostics;
+      chunks.push(value);
+    }
+    const payload = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    const code = payload?.error?.code ?? payload?.error?.type;
+    if (typeof code === "string" && allowed.has(code))
+      diagnostics.providerCode = code;
+  } catch {
+    /* Error bodies and messages are deliberately discarded. */
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+  return diagnostics;
 }
 export async function metaJSON(
   system: string,
@@ -93,7 +155,8 @@ export async function metaJSON(
       "http",
       `Meta API returned HTTP ${response.status}. No offline fallback was used.`,
       Date.now() - started,
-      response.status
+      response.status,
+      await safeFailureDiagnostics(response)
     );
   let text: string;
   try {
@@ -175,6 +238,33 @@ export async function metaJSON(
       outputTokens: count(payload.usage?.completion_tokens),
     },
   };
+}
+
+/** One bounded, non-attack readiness call. Never retries or changes credentials. */
+export async function metaPreflight(options: MetaOptions = {}) {
+  const result = await metaJSON(
+    "Return the requested readiness JSON.",
+    { ready: true },
+    "honeyweb_readiness",
+    {
+      type: "object",
+      properties: { ready: { type: "boolean", const: true } },
+      required: ["ready"],
+      additionalProperties: false,
+    },
+    options
+  );
+  if (
+    !result.value ||
+    typeof result.value !== "object" ||
+    (result.value as any).ready !== true
+  )
+    throw new MetaFailure(
+      "format",
+      "Provider readiness response failed validation.",
+      result.latencyMs
+    );
+  return { ready: true as const, model: result.model, usage: result.usage };
 }
 export async function generateWithMeta(
   snapshot: Snapshot,

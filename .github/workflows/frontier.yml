@@ -1,4 +1,4 @@
-name: Frontier Honeyweb campaign
+name: Historical frontier campaign (closed)
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +18,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   campaign:
-    if: github.ref == 'refs/heads/main'
+    # The v1 holdout is consumed. Preserve history; use the v2 development workflow.
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 60
     services:

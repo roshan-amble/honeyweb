@@ -49,3 +49,13 @@ The frontier agent can correct a rejected unobserved credential within its exist
 The campaign evaluates only the current workflow/containment candidate, with separate diagnostic controls. Candidate source and dependency hashes are locked before final evaluation. The evaluation remains limited to fresh fictional sessions on literal loopback listeners, with no production traffic, new privileges or external attack targets.
 
 The post-run v0.4.1 campaign guard stops further model decisions after a provider-side 401 or 403. It preserves unstarted sessions as explicit misses rather than deleting them from the denominator. Already-issued calls can complete; it is not a cancellation or network-egress mechanism. Application-side denials do not trigger it. The guard does not change the provider credential or bypass access controls.
+
+## Generalized workflow framework (v0.5)
+
+The standalone workflow runtime validates a declarative source-bound plan and serves fictional state only. Entity/route inference is a static naming subset; it does not infer real authorization semantics. Mutations exclude identifiers, ownership/permission fields, credentials and references. Export snapshots and revision histories are bounded and isolated per principal. The runtime cannot contact a real backend.
+
+An operator-issued opaque session cookie selects a server-side principal independently of the Authorization value visible to the model. Unknown sessions cannot self-register through HTTP. Credential rotation and additional sessions preserve containment within the running process; other principals remain independent. Copying a canary into another valid session signals that presenting principal. These are lab identity controls, not production cookie/session infrastructure; all state is lost on process restart.
+
+Provider errors retain only a bounded allowlisted code, status and UUID request identifier (other identifiers are hashed). Raw provider error bodies and messages are discarded. The campaign journal retains safe server-event evidence and fixed assignments, uses atomic synchronized writes and an exclusive writer lock, and refuses changed model/code/source/manifests on resume. Interrupted assignments are preserved as failures with unknown usage; unstarted assignments alone can resume. A preflight or batch infrastructure failure pauses scheduling. Access denials halt subsequent in-flight model decisions. No automatic retry or credential bypass is performed.
+
+The 90-case v0.5 verification is scripted local HTTP traffic, and the new live development manifest has not been executed. Neither is evidence of production efficacy. The previous v1 holdout and all its failed outcomes remain unchanged.

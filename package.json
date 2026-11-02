@@ -1,6 +1,6 @@
 {
   "name": "honeyweb",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "description": "Repository-aware deception graphs powered by Meta models",
@@ -21,7 +21,11 @@
     "evaluate:objective": "node --env-file-if-exists=.env --import tsx scripts/objective-pilot.ts",
     "evaluate:blind": "node --env-file-if-exists=.env --import tsx scripts/blind-pilot.ts",
     "evaluate:improvements": "node --env-file-if-exists=.env --import tsx scripts/improvement-pilot.ts",
-    "evaluate:frontier": "node --env-file-if-exists=.env --import tsx scripts/frontier-pilot.ts"
+    "evaluate:frontier": "node --env-file-if-exists=.env --import tsx scripts/frontier-pilot.ts",
+    "workflow:plan": "node --env-file-if-exists=.env --import tsx scripts/framework.ts plan",
+    "workflow:serve": "node --env-file-if-exists=.env --import tsx scripts/framework.ts serve",
+    "framework:verify": "node --import tsx scripts/framework.ts verify",
+    "evaluate:framework": "node --env-file-if-exists=.env --import tsx scripts/framework-live.ts"
   },
   "dependencies": {
     "react": "^19.2.0",

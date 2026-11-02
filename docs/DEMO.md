@@ -29,3 +29,7 @@ Edit model waiting time only with a visible “generation time condensed” labe
 - Do not turn the 40/40 error-free subset into a 100% efficacy claim. Show the 60 failed attacks in the denominator, invalid controls and the provider errors. The post-run access-denial guard was locally tested, not live-evaluated.
 - Close on the public repo and the next gate: restore provider access, then freeze a fresh protocol before new live evaluation.
 - Verify final video duration is at most three minutes and its link is accessible.
+
+## Optional v0.5 framework segment
+
+Show `npm run workflow:plan -- --source=fixtures/acme-v1`, then the Acme v2 plan. Explain how the compiler follows entity, field and relationship changes while the runtime supplies records, revisions and export state. The standalone runtime is separate from the existing visual dashboard. Show the [90-case scripted verification](FRAMEWORK.md#verification-evidence) as a functional check, explicitly labeled zero live model calls. The new checkpoint engine preserves failures and resumes only unstarted assignments. Do not replace the actual 40/100 frontier result with the scripted canary count. Live evaluation of v0.5 remains pending provider access.
