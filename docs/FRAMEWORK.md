@@ -1,6 +1,6 @@
 # Honeyweb framework v0.5
 
-Version 0.5 adds a reusable workflow runtime and a resumable evaluation engine. **69 tests and the build pass.** A separate offline run completed **90 scripted HTTP contract cases** across Acme v1, Acme v2 and the pinned RealWorld schema, with zero execution errors and all 54 benign cases completing without containment. These are implementation checks, not 90 autonomous agents or a measured 90% detection rate. No live provider calls were made for this release; the earlier [frontier result](case-studies/frontier.md) remains unchanged.
+Version 0.5 adds a reusable workflow runtime and a resumable evaluation engine. **69 tests and the build pass.** A separate offline run completed **90 scripted HTTP contract cases** across Acme v1, Acme v2 and the pinned RealWorld schema, with zero execution errors and all 54 benign cases completing without containment. These are implementation checks, not 90 autonomous agents or a measured 90% detection rate. The initial implementation made no live provider calls. A subsequent live launch stopped at its first readiness check with HTTP 403; see the [retained test attempt](#live-test-attempt-november-2-2026). The earlier [frontier result](case-studies/frontier.md) remains unchanged.
 
 ## What is implemented
 
@@ -65,7 +65,7 @@ The [committed manifest](../case-studies/framework-v2/manifest.json) freezes a *
 
 The manifest binds the model name, source evidence, all server source files, runner, dependency manifests, assignments and batch size. It permits at most 624 agent decisions plus ten initial readiness calls. Explicit resumes add recorded readiness checks for the remaining batches; they never repeat an agent assignment. The configured model is `muse-spark-1.3`, concurrency is three, and the existing GET/bounded-JSON-POST literal-loopback boundary remains in force.
 
-The **Framework development campaign** GitHub workflow defaults to preparing evidence only. Its live step requires selecting `run_live`; the model key is supplied only to that step. This workflow has not been dispatched for this release. The historical v1 workflow is closed to prevent accidental replay, with its source and results preserved.
+The **Framework development campaign** GitHub workflow defaults to preparing evidence only. Its live step requires selecting `run_live`; the model key is supplied only to that step. The first live dispatch is recorded below. The historical v1 workflow is closed to prevent accidental replay, with its source and results preserved.
 
 After the account/service owner resolves provider access, a local operator can use the committed candidate:
 
@@ -86,3 +86,23 @@ This adapter requires the pinned RealWorld checkout, its dependencies and the di
 A checkpoint records a batch as started **before** executing it. After a crash, such assignments become explicit interrupted failures and are never replayed. Their usage is marked unknown rather than inferred as zero. Only unstarted assignments can resume. All planned attacks remain in the conservative denominator; separately reported completion statistics do not replace it. A real protected read remains visible even if a provider or cleanup error occurs afterward. Stale writer locks require the operator to verify the original process is gone before removing that lock; the runner never steals a live lock.
 
 Candidate retirement is a recommendation for the active development pool, not deletion of code or historical evidence. The assessment requires complete execution, successful capability controls, exercised secured boundaries, the declared catch threshold, benign completion and the disruption limit. Provider failure yields insufficient evidence, not a judgment that a trap is ineffective. A held-out campaign requires a separate matching frozen selection and cannot be used to tune the candidate it evaluated.
+
+## Live test attempt: November 2, 2026
+
+[Workflow run 41515924737](https://github.com/roshan-amble/honeyweb/actions/runs/41515924737) launched at 12:05 PM Pacific against commit `e392447a66753823bea7d3052d066a71427133d5`, using the existing Actions secret and the committed 30-session development manifest. Setup, dependency installation, all 69 tests and the build passed in Actions. Local retesting also passed all 69 tests, the build and the 90-case scripted matrix, including 54 benign tasks without containment; the final local report and checkpoint agreed.
+
+The only live model request was the non-attack readiness check. Meta returned **HTTP 403**, and the campaign paused before application startup or any agent assignment. The workflow correctly exited with failure and uploaded its checkpoint. No assignment was retried and no provider bypass or credential replacement was attempted.
+
+| Result | Recorded value |
+| --- | ---: |
+| Live readiness requests | 1, denied with HTTP 403 |
+| Agent sessions started | 0 of 30 |
+| Agent model calls / target HTTP requests | 0 / 0 |
+| Assignments preserved as unstarted and blocked | 30 |
+| Candidate assessment | Insufficient evidence |
+
+The diagnostic request ID is `de8022e4-36dd-4ba6-918e-4a2baad15758`. No allowlisted provider error code was present in the retained diagnostics. The raw provider message and body were discarded, so the evidence does not establish whether credentials, account access, model entitlement, quota or another cause produced the denial. This is a provider access failure, not a Honeyweb catch or an application authorization response. There is no new autonomous-agent detection estimate and no evidence for retiring a candidate.
+
+The [exact checkpoint](case-studies/framework-development-v2-checkpoint.json) retains the bound manifest, one failed preflight and every unstarted assignment. Its SHA-256 is `8ec457630c5cda2bf9ba0f67bd516d02eacace3b6c4a1b212830217efa746d20`. Artifact `13174643579` ZIP SHA-256 is `e3df4ca2ca90d618b7be357e376231b3b847ac4872b374dc5bc53a6b9c29da68`; it contains only `manifest.json` and `checkpoint.json`. The checkpoint manifest was checked against the committed manifest, and its recorded manifest hash was independently recomputed. The [workflow screenshot](case-studies/framework-development-v2-run.jpg) preserves its failure status.
+
+Continuation requires restored provider access. Restore both artifact files into a private checkpoint directory and use the same candidate with `--resume`. Do not use GitHub's generic **Re-run jobs** action: this workflow does not automatically restore a prior run's checkpoint. All 30 assignments are still eligible because none started; the failed preflight must remain in the journal. Source, model and candidate checks remain in force.
