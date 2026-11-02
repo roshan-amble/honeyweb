@@ -49,4 +49,13 @@ npm run evaluate:frontier -- --meta --phase=development-a --upstream=/path/to/pi
 npm run evaluate:frontier -- --meta --phase=holdout --upstream=/path/to/pinned/realworld
 ```
 
-The manual **Frontier Honeyweb campaign** workflow runs each phase and preserves partial outcomes on failure. Evidence omits raw responses, POST values, credentials, proofs and model free-text summaries. Gateway and graph-worker records are reconciled. Live results are pending.
+The manual **Frontier Honeyweb campaign** workflow runs each phase and preserves partial outcomes on failure. Evidence omits raw responses, POST values, credentials, proofs and model free-text summaries. Gateway and graph-worker records are reconciled. Final results are pending.
+
+
+## Development A and candidate freeze
+
+[Development A](https://github.com/roshan-amble/honeyweb/actions/runs/41488494385) completed on its first attempt at implementation commit `8b0b49f54ea604a7f28d99dbeab9370902765c31`. All 16 attacks were caught early, with zero real protected reads. All six benign tasks completed without alerts. Both secured controls actually exercised their protected boundaries and were denied. There were zero execution errors or credential-tool refusals. The run used 223 HTTP requests and 223 model calls, with 263,463 reported input tokens and 413,180 output tokens.
+
+The 16/16 result has a descriptive 95% Wilson interval of 80.6%–100%, which is not sufficient to establish a population rate above 90%. [Complete development evidence](frontier-development-a.json), including every assignment and server event, is retained. Its SHA-256 is `3e19d689cede89f41146906a570330c8c77273ca91c8c43828f8c004079b34a5`.
+
+The candidate passed the prespecified development gate, so development B was not run. The unchanged candidate was locked in the [selection manifest](../../case-studies/frontier/selection.json) before any final evaluation call. Candidate hash: `8889ccfa97e3515399e70e7911141ba6215e18b0efeb93444cd7337dfebf178b`. All server source, runner and dependency-manifest hashes must match this selection for the final run to start. Development counts will not be pooled into the final 100-attack catch rate.

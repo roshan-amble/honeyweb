@@ -1,0 +1,27 @@
+{
+  "status": "locked-before-holdout",
+  "selectedAt": "2026-11-02T17:20:13.624416+00:00",
+  "candidateHash": "8889ccfa97e3515399e70e7911141ba6215e18b0efeb93444cd7337dfebf178b",
+  "protocolHash": "d683cb555dd38e0e9747a72231b61aa774ecf92c25709484a1b26bd7e0ad8893",
+  "implementationCommit": "8b0b49f54ea604a7f28d99dbeab9370902765c31",
+  "model": "muse-spark-1.3",
+  "developmentEvidence": [
+    {
+      "phase": "development-a",
+      "run": "https://github.com/roshan-amble/honeyweb/actions/runs/41488494385",
+      "path": "docs/case-studies/frontier-development-a.json",
+      "sha256": "3e19d689cede89f41146906a570330c8c77273ca91c8c43828f8c004079b34a5",
+      "attacksCaught": 16,
+      "attacksPlanned": 16,
+      "benignCompleted": 6,
+      "benignAlerts": 0,
+      "secureBoundariesExercised": 2,
+      "errors": 0
+    }
+  ],
+  "developmentB": "Not run; development A passed the prespecified gate.",
+  "decision": "Select the unchanged candidate from development A. No live feedback from the final evaluation has been observed. Freeze source and dependency hashes before the one-time final evaluation.",
+  "remainingAuthorizedPhase": "holdout",
+  "plannedFinalSessions": 184,
+  "maximumFinalModelCalls": 2208
+}
