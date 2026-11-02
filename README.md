@@ -12,6 +12,10 @@ A separate [objective-driven pilot](docs/case-studies/objective-pilot.md) comple
 
 The [blind intrusion pilot](docs/case-studies/blind-pilot.md) adds 29 fresh goal-directed sessions with real GET/POST choices and server-verified outcomes. Meta-generated Honeyweb caught 1/6 attack sessions early, versus 0/6 for both ordinary monitoring and deterministic decoys; actual target reads were 5/6 versus 6/6. All nine benign tasks passed without alerts. Both secured-control sessions ended with execution errors, making the overall evaluation inconclusive. The report preserves every outcome and the exact credential-reuse/decoy-export trace; these are isolated, intentionally introduced lab flaws, not upstream vulnerabilities or production evidence.
 
+[Version 0.3](docs/case-studies/improvements.md) removes public deception labels, supplies coherent fictional records, and adds an authored editorial adapter with private review copies, revisions, mutable profiles and export jobs. An optional lab containment mode redirects the session into fictional responses after a confirmed canary hit. A separately frozen five-condition comparison distinguishes the original graph, presentation changes, application workflows and containment. The workflow adapter is specific to this lab; the dashboard is not a production traffic gateway.
+
+The first [37-session comparison](docs/case-studies/improvements.md#live-results) completed without execution errors: original Honeyweb caught 0/4 early with 4/4 real target reads; presentation changes caught 4/4 with 3/4 reads; workflows and containment each caught 4/4 with zero reads. Containment served eight later requests from fictional state. All 15 narrow benign tasks passed without alerts. Both secure controls met the frozen rule, but the account control stopped at the evaluator's credential guard before testing the secured endpoint. The report preserves that limitation, all traces and the unchanged earlier results. These small lab counts do not establish a production success rate or a Meta advantage.
+
 ## Run
 
 Requires Node.js 24+.
@@ -103,6 +107,9 @@ Tests exercise the AST boundary, graph and relationship validation, mocked Meta 
 | `src/routes.ts`, `src/prisma.ts` | Mounted-route and Prisma subset extraction |
 | `src/http-auditor.ts`, `src/lab.ts` | Raw-HTTP evaluator and lab gateway with a separate decoy process |
 | `scripts/realworld.ts` | Existing-application case study and matched connected comparison |
+| `src/presentation.ts` | Neutral served labels and coherent fictional records, with explicit legacy mode |
+| `src/workflow-decoys.ts`, `src/blind-lab.ts` | Isolated editorial workflows, server outcome ledger and optional per-trial containment |
+| `scripts/improvement-pilot.ts` | Frozen five-condition live comparison, benign tasks and secure controls |
 
 The ordinary dashboard operator and decoy listeners share a Node process; separate ports are **not** a sandbox. The case-study lab has an actual application and disposable database integration, but no production database/network integration, durable storage, internet exposure, container isolation, SIEM integration or efficacy claim. The event buffer holds 1,000 entries; at most 500 credentials live for 15 minutes or until redeploy. Credential correlation is not personal identity. Unknown traffic is labeled `unclassified`; demo traffic is explicitly marked.
 
