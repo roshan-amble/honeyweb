@@ -4,7 +4,7 @@
 
 Run `npm ci --ignore-scripts && npm run check && npm start`. Configure `MODEL_API_KEY` privately for actual Meta generation and exploration. The GitHub secret does not set a local key. Rehearse both fixture versions. Use the synthetic Acme fixtures or the pinned public RealWorld source; keep keys, `.env` and actual customer code off screen.
 
-The longer evaluation command creates reproducible evidence: `npm run evaluate -- --meta --output=meta-evaluation.json`. A workflow artifact can prove a previous live run, but do not narrate it as a newly executed request. For the existing-application segment, show the committed [RealWorld case study](case-studies/realworld.md) and its live workflow. Keep the smaller fixture for the live three-minute UI sequence; the longer case runner is separate. Use the [v0.3 comparison table and containment trace](case-studies/improvements.md#live-results) for the final evidence segment. The stateful editorial adapter runs in the lab; the ordinary dashboard does not quarantine application traffic.
+The longer evaluation command creates reproducible evidence: `npm run evaluate -- --meta --output=meta-evaluation.json`. A workflow artifact can prove a previous live run, but do not narrate it as a newly executed request. For the existing-application segment, show the committed [RealWorld case study](case-studies/realworld.md) and its live workflow. Keep the smaller fixture for the live three-minute UI sequence; the longer case runner is separate. Use the [frontier final results and containment trace](case-studies/frontier.md#final-results) for the final evidence segment; keep the smaller v0.3 comparison as historical context. The stateful editorial adapter runs in the lab; the ordinary dashboard does not quarantine application traffic.
 
 ## Storyboard
 
@@ -15,7 +15,7 @@ The longer evaluation command creates reproducible evidence: `npm run evaluate -
 | 0:50–1:30 | Meta explorer and its observed HTTP trail | “This second model gets only an entry URL. It discovers links from actual responses and chooses what to inspect. It has no source or hidden graph. These requests are our labeled simulation.” |
 | 1:30–2:05 | Scan v2; highlight three failed schema checks and affected endpoints | “The application changed: customers became accounts, the order reference changed, and invoices gained a due date. Honeyweb shows exactly where the deployed data became stale.” |
 | 2:05–2:35 | Regenerate; show before/after checks and explore again | “A candidate must pass consistency checks before replacing the environment. References and exports stay aligned, and old credentials are invalidated.” |
-| 2:35–3:00 | Five-condition v0.3 result table; account-export containment trace, requests 7–12 | “In 37 new blind sessions, original Honeyweb caught zero of four attacks early. Application workflows caught four of four, with no real target reads. Here an agent creates a fictional export, reads it, and returns to a real route that containment now serves from fictional state. All 15 ordinary tasks passed. These remain small lab results; one secure control stopped at the credential guard.” |
+| 2:35–3:00 | Frontier result table and `holdout-attack-55` containment trace | “We expanded to 208 attempted sessions and retained every failure. The final result is 40 valid catches in 100 scheduled attacks; model API access denials invalidated the larger evaluation. Here a canary credential triggers containment before the real export is served. The mechanism works in this trace, but we have not established a 90% catch rate.” |
 
 Edit model waiting time only with a visible “generation time condensed” label. Preserve the observed runtime in the evidence panel. Never describe an offline fallback as Meta output. Keep the final hosted video accessible without a login.
 
@@ -26,5 +26,6 @@ Edit model waiting time only with a visible “generation time condensed” labe
 - Show source failure before regeneration and passing checks afterward.
 - Distinguish generator reasoning summaries from deterministic runtime constraints.
 - Keep the original 1/6 blind result separate from the new matched 0/4 legacy result. The new workflows are authored code around the earlier Meta graph. Do not claim a production 100% catch rate or a proven incremental benefit from containment; the passive workflow arm also had zero real reads.
-- Close on the public repo and realistic next validation step.
+- Do not turn the 40/40 error-free subset into a 100% efficacy claim. Show the 60 failed attacks in the denominator, invalid controls and the provider errors. The post-run access-denial guard was locally tested, not live-evaluated.
+- Close on the public repo and the next gate: restore provider access, then freeze a fresh protocol before new live evaluation.
 - Verify final video duration is at most three minutes and its link is accessible.

@@ -13,6 +13,7 @@ Official [participant guide](https://cerebralvalley.ai/e/meta-ai-developer-hacka
 | Objective-driven deception test | [21-session live pilot](case-studies/objective-pilot.md) completed with frozen protocol, capability and benign controls; zero confirmed deception for either graph, with raw negative evidence preserved |
 | Blind autonomous attack test | [29-session first run](case-studies/blind-pilot.md): one high-confidence catch in six Meta-condition attacks, all nine benign tasks completed without alerts; both secure controls had execution errors, so overall efficacy remains inconclusive |
 | Credibility and containment improvements | [37-session v0.3 comparison](case-studies/improvements.md): original 0/4 early catches and 4/4 real reads; workflows and containment each 4/4 catches and zero reads; 15 benign tasks passed without alerts; no execution errors. One secure control stopped at the credential guard, limiting server-side conclusions |
+| Larger frontier-only campaign | [208 attempted sessions](case-studies/frontier.md): 24 development and 184 final. Final conservative catch result 40/100; 116 final sessions had provider errors, so the 90% target and control validity failed. Full negative evidence retained; post-run provider-stop guard tested locally |
 | Three-minute demo | Updated storyboard in `DEMO.md`; recording and accessible link still required |
 | Project description and Meta rationale | Drafted in `SUBMISSION.md`; final review required |
 | Team, track, theme | Confirm team members and track; suggested theme is Push the Frontier |

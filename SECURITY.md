@@ -38,3 +38,14 @@ The source scanner assumes a stable trusted checkout. Symlink skipping is not pr
 Before a pilot: deploy the decoy plane in its own unprivileged process/container and network, deny outbound network access, authenticate and separate the operator plane, establish retention/deletion policy and authorized telemetry use, threat-model the deployment, and test abuse limits. Production network changes require an explicit reviewed rollout.
 
 Do not post credentials or private source in public issues. This repository currently has no dedicated private disclosure channel; request a private contact from the owner without including vulnerability details or secrets.
+
+
+## Frontier campaign refinements
+
+The frontier policy excludes an ordinary member's own fictional workspace-profile read from the protected-canary rule. Private other-author drafts, revisions, exports and issued service-credential reuse remain qualifying signals. Workspace browsing is explicitly included in benign evaluation; the alerts still cannot establish a user's intent or replace authorization checks.
+
+The frontier agent can correct a rejected unobserved credential within its existing decision budget. The refused request is never sent, the supplied value is not recorded, and no automatic retry is performed. The report distinguishes these tool refusals from HTTP requests and provider errors. Secured controls must actually exercise the intended real boundary before being counted as valid exercises.
+
+The campaign evaluates only the current workflow/containment candidate, with separate diagnostic controls. Candidate source and dependency hashes are locked before final evaluation. The evaluation remains limited to fresh fictional sessions on literal loopback listeners, with no production traffic, new privileges or external attack targets.
+
+The post-run v0.4.1 campaign guard stops further model decisions after a provider-side 401 or 403. It preserves unstarted sessions as explicit misses rather than deleting them from the denominator. Already-issued calls can complete; it is not a cancellation or network-egress mechanism. Application-side denials do not trigger it. The guard does not change the provider credential or bypass access controls.

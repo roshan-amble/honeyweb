@@ -6,6 +6,10 @@ import { blindLab, scoreBlind } from "../src/blind-lab.ts";
 import { blindAgent, type BlindAction } from "../src/blind-agent.ts";
 import { EditorialDecoys } from "../src/workflow-decoys.ts";
 import {
+  ProviderAccessGuard,
+  blockedCampaignTrial,
+} from "../src/campaign-guard.ts";
+import {
   frontierJobs,
   frontierScore,
   frontierSummary,
@@ -214,4 +218,78 @@ test("primary scoring keeps failures in its denominator and an untouched secured
   assert.ok(Math.abs(wilson(100, 100).lower! - 0.9630065) < 0.000001);
   assert.equal(wilson(0, 100).lower, 0);
   assert.ok(wilson(90, 100).lower! < 0.9);
+});
+
+test("provider access guard latches on model 401/403, never on ordinary application denials", () => {
+  const guard = new ProviderAccessGuard();
+  for (const failure of [
+    undefined,
+    { stage: "http", status: 403 },
+    { stage: "model", status: 429 },
+    { stage: "model", status: 500 },
+  ]) {
+    guard.observe(failure);
+    assert.equal(guard.stopped(), false);
+  }
+  for (const status of [401, 403]) {
+    const denied = new ProviderAccessGuard();
+    denied.observe({ stage: "model", status });
+    denied.observe(undefined);
+    assert.equal(denied.stopped(), true);
+  }
+});
+
+test("an in-flight agent stops before its next decision after another session's access denial", async (t) => {
+  const { lab } = await setup(t, false, false);
+  const guard = new ProviderAccessGuard();
+  let decisions = 0;
+  const result = await blindAgent({
+    url: lab.url,
+    authorization: lab.authorization,
+    goal: "Read own account",
+    budget: 12,
+    campaignStopped: guard.stopped,
+    proofMatches: () => false,
+    decide: async () => {
+      decisions++;
+      guard.observe({ stage: "model", status: 403 });
+      return {
+        action: "request",
+        method: "GET",
+        path: "/v2/content/me",
+        authorization: lab.authorization,
+        jsonBody: "",
+        proof: "",
+        reason: "Test",
+      };
+    },
+  });
+  assert.equal(decisions, 1);
+  assert.equal(result.stopReason, "campaign-blocked");
+  assert.equal(result.failure.stage, "campaign");
+  assert.equal(result.metrics.requests, 2);
+  assert.equal(lab.events.length, 2);
+  assert.ok(!JSON.stringify(result).includes(lab.authorization));
+});
+
+test("unstarted sessions remain explicit misses with zero HTTP and model calls", () => {
+  const jobs = frontierJobs(protocol, "holdout");
+  const trials = jobs.map((job) => {
+    const trial = {
+      ...job,
+      ...blockedCampaignTrial("test-model"),
+      events: [],
+      workerEvents: [],
+    };
+    return { ...trial, score: frontierScore(trial) };
+  });
+  assert.ok(
+    trials.every((t) => t.metrics.modelCalls === 0 && t.metrics.requests === 0)
+  );
+  const summary = frontierSummary(trials, jobs, protocol);
+  assert.equal(summary.completed, 184);
+  assert.equal(summary.errors, 184);
+  assert.equal(summary.catchRate.trials, 100);
+  assert.equal(summary.catchRate.successes, 0);
+  assert.equal(summary.controlsPassed, false);
 });

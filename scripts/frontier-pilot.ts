@@ -7,6 +7,10 @@ import { startReferenceApp } from "../src/reference-app.ts";
 import { blindLab } from "../src/blind-lab.ts";
 import { blindAgent, blindSystem, redactBlind } from "../src/blind-agent.ts";
 import {
+  ProviderAccessGuard,
+  blockedCampaignTrial,
+} from "../src/campaign-guard.ts";
+import {
   frontierJobs,
   frontierScore,
   frontierSummary,
@@ -104,6 +108,7 @@ try {
   reference = await startReferenceApp(upstream, protocol.source.split("@")[1]);
   report.reference = reference.checks;
   const results: any[] = new Array(jobs.length);
+  const providerGuard = new ProviderAccessGuard();
   let next = 0;
   async function consume() {
     while (next < jobs.length) {
@@ -127,55 +132,61 @@ try {
       };
       let workerEvents: any[] = [];
       try {
-        worker = job.candidate
-          ? await spawnDecoy(generation, snapshot, "application")
-          : undefined;
-        lab = await blindLab({
-          ...job,
-          upstreamURL: reference!.url,
-          generation: job.candidate ? generation : undefined,
-          decoyURL: worker?.url,
-          applicationWorkflows: job.candidate,
-          containment: job.candidate,
-          presentation: "application",
-          workflowPolicy: "frontier",
-          routeAliases: job.aliases,
-          entryPlacement: job.layout % 3,
-        });
-        trial = await blindAgent({
-          url: lab.url,
-          authorization: lab.authorization,
-          goal: job.goal,
-          budget: protocol.httpBudget,
-          proofMatches: lab.proofMatches,
-          recoverRejectedCredentials: true,
-          meta: { timeoutMs: protocol.modelTimeoutMs },
-        });
-        if (worker) {
-          const raw = (await worker.call({ operation: "events" })).events;
-          workerEvents = raw.map((e: any) => ({
-            method: e.method,
-            path: e.path,
-            status: e.status,
-          }));
-          assert.deepEqual(
-            workerEvents,
-            lab.events
-              .filter((e) => e.servedBy === "graph")
-              .map((e) => ({
-                method: e.method,
-                path: e.path.split("?")[0],
-                status: e.status,
-              })),
-            "Worker/gateway mismatch"
-          );
+        if (providerGuard.stopped()) {
+          trial = blockedCampaignTrial(report.model);
+        } else {
+          worker = job.candidate
+            ? await spawnDecoy(generation, snapshot, "application")
+            : undefined;
+          lab = await blindLab({
+            ...job,
+            upstreamURL: reference!.url,
+            generation: job.candidate ? generation : undefined,
+            decoyURL: worker?.url,
+            applicationWorkflows: job.candidate,
+            containment: job.candidate,
+            presentation: "application",
+            workflowPolicy: "frontier",
+            routeAliases: job.aliases,
+            entryPlacement: job.layout % 3,
+          });
+          trial = await blindAgent({
+            url: lab.url,
+            authorization: lab.authorization,
+            goal: job.goal,
+            budget: protocol.httpBudget,
+            proofMatches: lab.proofMatches,
+            recoverRejectedCredentials: true,
+            campaignStopped: providerGuard.stopped,
+            meta: { timeoutMs: protocol.modelTimeoutMs },
+          });
+          if (worker) {
+            const raw = (await worker.call({ operation: "events" })).events;
+            workerEvents = raw.map((e: any) => ({
+              method: e.method,
+              path: e.path,
+              status: e.status,
+            }));
+            assert.deepEqual(
+              workerEvents,
+              lab.events
+                .filter((e) => e.servedBy === "graph")
+                .map((e) => ({
+                  method: e.method,
+                  path: e.path.split("?")[0],
+                  status: e.status,
+                })),
+              "Worker/gateway mismatch"
+            );
+          }
+          if (lab.events.some((e) => e.status >= 500))
+            trial.error = "Lab operation failed; retained without retry.";
         }
-        if (lab.events.some((e) => e.status >= 500))
-          trial.error = "Lab operation failed; retained without retry.";
       } catch {
         trial.error =
           "Setup or ledger verification failed; retained without retry.";
       }
+      providerGuard.observe(trial.failure);
       const events = lab?.events ?? [];
       const cleanup = await Promise.allSettled([lab?.close(), worker?.close()]);
       if (cleanup.some((r) => r.status === "rejected"))

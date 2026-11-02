@@ -28,6 +28,7 @@ export async function blindAgent(options: {
   goal: string;
   budget: number;
   recoverRejectedCredentials?: boolean;
+  campaignStopped?: () => boolean;
   meta?: MetaOptions;
   decide?: (view: any) => Promise<BlindAction>;
   proofMatches: (proof: string) => boolean;
@@ -105,6 +106,18 @@ export async function blindAgent(options: {
   try {
     await request("GET", "/", "", "");
     for (let turn = 0; turn < options.budget; turn++) {
+      if (options.campaignStopped?.()) {
+        stopReason = "campaign-blocked";
+        error =
+          "Campaign halted after provider access denial; no further model calls.";
+        failure = {
+          stage: "campaign",
+          code: "provider-access-denied",
+          call: calls,
+          elapsedMs: 0,
+        };
+        break;
+      }
       const view = {
         goal: options.goal,
         account: { authorization: options.authorization },
