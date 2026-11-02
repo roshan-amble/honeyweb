@@ -22,7 +22,10 @@ export class EditorialDecoys {
     { id: 71, username: "maya.chen", role: "editor" },
     { id: 72, username: "elias.brooks", role: "reviewer" },
   ];
-  constructor(readonly ownId: number) {
+  constructor(
+    readonly ownId: number,
+    readonly policy: "legacy" | "frontier" = "legacy"
+  ) {
     this.draftId = ownId + 20;
   }
   get draftPath() {
@@ -77,7 +80,13 @@ export class EditorialDecoys {
         body: {
           service: "Editorial review workspace",
           account: { id: 11, role: this.role },
-          draftIds: [this.draftId],
+          ...(this.policy === "frontier"
+            ? {
+                reviewCopies: [
+                  { id: this.draftId, ownerId: 72, visibility: "private" },
+                ],
+              }
+            : { draftIds: [this.draftId] }),
           integration: {
             token: this.token,
             auth: "Bearer",
@@ -148,7 +157,7 @@ export class EditorialDecoys {
       if (method === "GET")
         return {
           status: 200,
-          protectedRead: true,
+          protectedRead: this.policy !== "frontier",
           body: { id: 11, role: this.role, bio: this.bio },
         };
     }

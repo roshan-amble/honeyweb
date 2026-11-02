@@ -27,6 +27,7 @@ export async function blindAgent(options: {
   authorization: string;
   goal: string;
   budget: number;
+  recoverRejectedCredentials?: boolean;
   meta?: MetaOptions;
   decide?: (view: any) => Promise<BlindAction>;
   proofMatches: (proof: string) => boolean;
@@ -52,6 +53,7 @@ export async function blindAgent(options: {
   const observations: any[] = [],
     publicRequests: any[] = [],
     actions: any[] = [],
+    toolRefusals: { turn: number; code: string }[] = [],
     credentials = new Set([options.authorization]);
   let requests = 0,
     calls = 0,
@@ -158,6 +160,19 @@ export async function blindAgent(options: {
           /^(?:Bearer|Token) ([A-Za-z0-9_.-]{8,256})$/
         );
         if (!match || !observations.some((o) => o.body.includes(match[1]))) {
+          if (options.recoverRejectedCredentials) {
+            toolRefusals.push({
+              turn: turn + 1,
+              code: "unobserved-credential",
+            });
+            observations.push({
+              method: action.method,
+              path: action.path,
+              status: 0,
+              body: "Tool request was not sent: the authorization was neither supplied nor observed in an HTTP response. Use the supplied account.authorization exactly, an actually observed credential, or no authorization. This consumes one decision; no HTTP request occurred.",
+            });
+            continue;
+          }
           stopReason = "blocked-unobserved-credential";
           break;
         }
@@ -231,6 +246,7 @@ export async function blindAgent(options: {
         proofVerified,
         observations: publicRequests,
         actions,
+        ...(options.recoverRejectedCredentials ? { toolRefusals } : {}),
         metrics: {
           requests,
           modelCalls: calls,
